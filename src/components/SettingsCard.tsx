@@ -1,6 +1,6 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { OptimizerSettings } from '../types/optimizer';
-import { Scissors, Sliders, Check } from 'lucide-react';
+import { ChevronDown, ChevronUp, Sliders } from 'lucide-react';
 
 interface SettingsCardProps {
   settings: OptimizerSettings;
@@ -12,107 +12,91 @@ interface SettingsCardProps {
 export const SettingsCard: React.FC<SettingsCardProps> = ({
   settings,
   onChange,
-  videoDuration,
   disabled
 }) => {
-  const estimatedClips = settings.autoSplit30s && videoDuration > 0
-    ? Math.max(1, Math.ceil(videoDuration / 30))
-    : 1;
+  const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="rounded-3xl border border-white/10 bg-zinc-900/60 p-5 space-y-4.5 backdrop-blur-md shadow-lg">
-      <div className="flex items-center justify-between pb-2 border-b border-white/5">
-        <span className="text-xs font-bold text-zinc-400 uppercase tracking-wider flex items-center gap-1.5">
-          <Sliders className="w-3.5 h-3.5" /> Konfigurasi Video
+    <div className="rounded-2xl border border-white/5 bg-zinc-900/40 p-3 backdrop-blur-md">
+      <button
+        type="button"
+        disabled={disabled}
+        onClick={() => setIsOpen(!isOpen)}
+        className="w-full flex items-center justify-between text-xs text-zinc-400 hover:text-zinc-200 transition py-0.5"
+      >
+        <span className="flex items-center gap-1.5 font-medium">
+          <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+          Pilihan Lanjutan ({settings.quality}, {settings.autoSplit30s ? 'Auto-Split 30s' : 'Penuh'})
         </span>
-        <span className="text-[11px] text-emerald-400 font-semibold bg-emerald-500/10 px-2 py-0.5 rounded-full border border-emerald-500/20">
-          WhatsApp HD Formula
-        </span>
-      </div>
+        {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+      </button>
 
-      {/* Auto Split 30s Toggle */}
-      <div className="flex items-center justify-between py-1">
-        <div>
-          <label className="text-sm font-bold text-zinc-100 flex items-center gap-1.5">
-            <Scissors className="w-4 h-4 text-emerald-400" />
-            Auto-Split 30 Saat
-            <span className="text-[10px] px-1.5 py-0.2 bg-emerald-500/10 text-emerald-400 rounded-md border border-emerald-500/20 font-bold">
-              Disyorkan
-            </span>
-          </label>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Potong video automatik ikut had WhatsApp Status ({estimatedClips} bahagian klip).
-          </p>
-        </div>
-        <button
-          type="button"
-          disabled={disabled}
-          onClick={() => onChange({ ...settings, autoSplit30s: !settings.autoSplit30s })}
-          className={`relative inline-flex h-6 w-11 flex-shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none ${
-            settings.autoSplit30s ? 'bg-emerald-500 shadow-[0_0_12px_rgba(16,185,129,0.5)]' : 'bg-zinc-700'
-          }`}
-        >
-          <span
-            className={`pointer-events-none inline-block h-5 w-5 transform rounded-full bg-white shadow ring-0 transition duration-200 ease-in-out ${
-              settings.autoSplit30s ? 'translate-x-5' : 'translate-x-0'
-            }`}
-          />
-        </button>
-      </div>
+      {isOpen && (
+        <div className="pt-3 mt-2 border-t border-white/5 space-y-3 animate-fade-in text-xs">
+          {/* Auto-Split Toggle */}
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-300 font-medium">Potong automatik 30 saat</span>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange({ ...settings, autoSplit30s: !settings.autoSplit30s })}
+              className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
+                settings.autoSplit30s ? 'bg-emerald-500' : 'bg-zinc-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                  settings.autoSplit30s ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
 
-      {/* Pilihan Kualiti Preset */}
-      <div>
-        <label className="text-xs font-semibold text-zinc-300 block mb-2.5">
-          Resolusi & Ketajaman Output
-        </label>
-        <div className="grid grid-cols-2 gap-3">
-          {/* Ultra HD 1080p */}
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange({ ...settings, quality: '1080p' })}
-            className={`p-3.5 rounded-2xl border text-left transition relative ${
-              settings.quality === '1080p'
-                ? 'border-emerald-500 bg-emerald-500/10 text-zinc-100 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30'
-                : 'border-white/10 bg-zinc-900/40 text-zinc-400 hover:border-white/20'
-            }`}
-          >
-            {settings.quality === '1080p' && (
-              <span className="absolute top-2.5 right-2.5 w-4 h-4 rounded-full bg-emerald-500 text-black flex items-center justify-center">
-                <Check className="w-3 h-3 stroke-[3]" />
-              </span>
-            )}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-extrabold text-zinc-100">Ultra HD</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-bold">1080p</span>
+          {/* Quality */}
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-300 font-medium">Kualiti Output</span>
+            <div className="flex bg-zinc-800 p-0.5 rounded-lg border border-white/10">
+              <button
+                type="button"
+                onClick={() => onChange({ ...settings, quality: '1080p' })}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
+                  settings.quality === '1080p' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                1080p
+              </button>
+              <button
+                type="button"
+                onClick={() => onChange({ ...settings, quality: '720p' })}
+                className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
+                  settings.quality === '720p' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+                }`}
+              >
+                720p
+              </button>
             </div>
-            <p className="text-[11px] text-zinc-400 mt-1">Kualiti kristal maksimum (CRF 20)</p>
-          </button>
+          </div>
 
-          {/* Standard HD 720p */}
-          <button
-            type="button"
-            disabled={disabled}
-            onClick={() => onChange({ ...settings, quality: '720p' })}
-            className={`p-3.5 rounded-2xl border text-left transition relative ${
-              settings.quality === '720p'
-                ? 'border-emerald-500 bg-emerald-500/10 text-zinc-100 shadow-[0_0_20px_rgba(16,185,129,0.15)] ring-1 ring-emerald-500/30'
-                : 'border-white/10 bg-zinc-900/40 text-zinc-400 hover:border-white/20'
-            }`}
-          >
-            {settings.quality === '720p' && (
-              <span className="absolute top-2.5 right-2.5 w-4 h-4 rounded-full bg-emerald-500 text-black flex items-center justify-center">
-                <Check className="w-3 h-3 stroke-[3]" />
-              </span>
-            )}
-            <div className="flex items-center justify-between">
-              <span className="text-sm font-extrabold text-zinc-100">Standard HD</span>
-              <span className="text-[10px] font-mono px-1.5 py-0.5 rounded bg-zinc-800 text-zinc-300 font-bold">720p</span>
-            </div>
-            <p className="text-[11px] text-zinc-400 mt-1">Proses lebih pantas & jimat memori</p>
-          </button>
+          {/* Mute Audio */}
+          <div className="flex items-center justify-between">
+            <span className="text-zinc-300 font-medium">Padam Audio (Mute)</span>
+            <button
+              type="button"
+              disabled={disabled}
+              onClick={() => onChange({ ...settings, muteAudio: !settings.muteAudio })}
+              className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
+                settings.muteAudio ? 'bg-emerald-500' : 'bg-zinc-700'
+              }`}
+            >
+              <span
+                className={`inline-block h-4 w-4 transform rounded-full bg-white transition ${
+                  settings.muteAudio ? 'translate-x-4' : 'translate-x-0.5'
+                }`}
+              />
+            </button>
+          </div>
         </div>
-      </div>
+      )}
     </div>
   );
 };

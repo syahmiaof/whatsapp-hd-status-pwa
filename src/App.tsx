@@ -225,11 +225,11 @@ export const App: React.FC = () => {
       />
 
       {/* 2. Main Content */}
-      <main className="flex-1 max-w-xl w-full mx-auto px-4 py-6 space-y-5">
+      <main className="flex-1 max-w-md w-full mx-auto px-4 py-5 space-y-3.5">
         {/* Ralat jika ada */}
         {errorMessage && (
-          <div className="p-4 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2.5">
-            <AlertTriangle className="w-5 h-5 flex-shrink-0 text-rose-400" />
+          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
+            <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400" />
             <p>{errorMessage}</p>
           </div>
         )}
@@ -244,21 +244,21 @@ export const App: React.FC = () => {
 
         {/* Tetapan & Butang Transcode */}
         {video && stage === 'idle' && (
-          <div className="space-y-4 animate-fade-in">
+          <div className="space-y-3 animate-fade-in">
+            <button
+              onClick={handleStartTranscoding}
+              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-green-500 hover:brightness-110 text-zinc-950 font-black text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] transition active:scale-[0.98] flex items-center justify-center gap-2"
+            >
+              <Zap className="w-4 h-4 fill-current" />
+              <span>Tukar ke Status HD</span>
+            </button>
+
             <SettingsCard
               settings={settings}
               onChange={setSettings}
               videoDuration={video.durationSeconds}
               disabled={false}
             />
-
-            <button
-              onClick={handleStartTranscoding}
-              className="w-full py-4 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-green-500 hover:brightness-110 text-zinc-950 font-black text-base shadow-[0_0_25px_rgba(16,185,129,0.3)] transition active:scale-[0.98] flex items-center justify-center gap-2"
-            >
-              <Zap className="w-5 h-5 fill-current" />
-              <span>Mula Optimumkan Kualiti HD</span>
-            </button>
           </div>
         )}
 

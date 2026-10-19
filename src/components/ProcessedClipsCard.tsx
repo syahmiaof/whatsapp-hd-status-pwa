@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TranscodeClipResult } from '../types/optimizer';
-import { Download, Share2, Sparkles, RefreshCw, Film, Info, AlertTriangle, CheckCircle2 } from 'lucide-react';
+import { Download, Share2, Sparkles, RefreshCw, Film, Info, Check, ArrowRight } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ProcessedClipsCardProps {
@@ -19,12 +19,12 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
   const [sharingIndex, setSharingIndex] = useState<number | null>(null);
   const [sentClips, setSentClips] = useState<number[]>([]);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
+  const [showForwardTip, setShowForwardTip] = useState(false);
 
-  // Trigger celebration confetti upon mount
   React.useEffect(() => {
     confetti({
-      particleCount: 60,
-      spread: 70,
+      particleCount: 50,
+      spread: 60,
       origin: { y: 0.6 },
       colors: ['#10b981', '#14b8a6', '#25D366']
     });
@@ -37,173 +37,151 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
     try {
       const file = new File([clip.blob], clip.filename, { type: 'video/mp4' });
 
-      // Semak jika pelayar menyokong perkongsian fail langsung (Web Share API)
       if (typeof navigator.share === 'function' && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
           await navigator.share({
             files: [file],
-            title: `WhatsApp HD Status (${clip.filename})`,
-            text: 'Status HD siap dipotong!',
+            title: `StatusHD (${clip.filename})`,
+            text: 'Status HD 1080p',
           });
-          // Tandakan sebagai telah dihantar
           setSentClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
           return;
         } catch (shareErr: any) {
           if (shareErr instanceof DOMException && shareErr.name === 'AbortError') {
             return;
           }
-          // OS tolak, muat turun terus ke telefon
           onDownloadClip(clip);
-          setShareNotice('Telefon menolak perkongsian terus. Fail dimuat turun ke galeri telefon.');
+          setShareNotice('Fail disimpan ke galeri telefon.');
           setSentClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
           return;
         }
       }
 
-      // Fallback untuk desktop / pelayar tanpa Web Share files
       onDownloadClip(clip);
-      setShareNotice('Fail disimpan ke telefon. Buka WhatsApp dan pilih klip ini terus ke status.');
+      setShareNotice('Fail disimpan ke telefon. Buka WhatsApp dan pilih klip ini.');
       setSentClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
     } catch (err) {
-      console.warn('Ralat perkongsian:', err);
+      console.warn('Ralat share:', err);
       onDownloadClip(clip);
-      setShareNotice('Fail dimuat turun ke peranti anda.');
     } finally {
       setSharingIndex(null);
     }
   };
 
   return (
-    <div className="rounded-3xl border border-emerald-500/25 bg-zinc-900/90 p-5 space-y-4 backdrop-blur-md shadow-2xl">
-      {/* Header Selesai */}
-      <div className="flex items-center justify-between pb-3 border-b border-white/10">
-        <div>
-          <h3 className="text-base font-extrabold text-zinc-100 flex items-center gap-1.5">
-            <Sparkles className="w-4 h-4 text-emerald-400" />
-            Video Selesai ({clips.length} Bahagian)!
-          </h3>
-          <p className="text-xs text-zinc-400 mt-0.5">
-            Kualiti Ultra HD WhatsApp Sweet-Spot sedia dihantar.
-          </p>
+    <div className="rounded-3xl border border-emerald-500/20 bg-zinc-900/70 p-4 space-y-3.5 backdrop-blur-md shadow-xl">
+      {/* Header */}
+      <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
+        <div className="flex items-center gap-1.5 text-zinc-100 font-bold text-sm">
+          <Sparkles className="w-4 h-4 text-emerald-400" />
+          <span>Klip Siap ({clips.length} Bahagian)</span>
         </div>
         <button
           onClick={onReset}
-          className="text-xs text-zinc-400 hover:text-zinc-200 transition py-1.5 px-3 rounded-xl bg-zinc-800/80 border border-white/10 flex items-center gap-1 font-semibold"
+          className="text-xs text-zinc-400 hover:text-white transition py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 flex items-center gap-1"
         >
           <RefreshCw className="w-3 h-3" /> Baru
         </button>
       </div>
 
-      {/* AMARAN EMAS PURESTATUS (Penting Supaya Video Tak Kabur) */}
-      <div className="p-3.5 rounded-2xl bg-amber-500/10 border border-amber-500/30 text-amber-200 text-xs flex items-start gap-2.5 shadow-sm">
-        <AlertTriangle className="w-4 h-4 text-amber-400 flex-shrink-0 mt-0.5" />
-        <div className="space-y-1">
-          <p className="font-extrabold text-amber-300 tracking-wide uppercase text-[11px]">
-            Peraturan Emas WhatsApp Status:
-          </p>
-          <p className="text-[11px] text-amber-100/90 leading-relaxed">
-            Lepas tekan butang, WhatsApp akan terbuka. <strong>JANGAN potong, JANGAN trim, dan JANGAN letak stiker/teks</strong> dalam WhatsApp! Terus tekan butang Send/Hantar supaya kualiti HD kekal 100% tanpa di-compress.
-          </p>
-        </div>
+      {/* Tip Penting (1 Ayat Sahaja) */}
+      <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center justify-between gap-2">
+        <p className="text-[11px] leading-tight">
+          ⚠️ <strong>Jangan edit/trim dalam WhatsApp</strong> — terus tekan Send supaya kekal 1080p.
+        </p>
+        <button
+          onClick={() => setShowForwardTip(!showForwardTip)}
+          className="text-[10px] text-amber-400 font-bold underline whitespace-nowrap"
+        >
+          {showForwardTip ? 'Tutup' : 'Trik Forward?'}
+        </button>
       </div>
 
-      {/* Makluman Share jika ada */}
-      {shareNotice && (
-        <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-2 animate-fade-in">
-          <div className="flex items-center gap-2">
-            <Info className="w-4 h-4 flex-shrink-0 text-emerald-400" />
-            <p>{shareNotice}</p>
-          </div>
-          <button
-            onClick={() => setShareNotice(null)}
-            className="text-zinc-400 hover:text-zinc-200 font-bold px-1"
-          >
-            ✕
-          </button>
+      {/* Trik Rahsia Forwarding (Collapsible) */}
+      {showForwardTip && (
+        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-200 text-[11px] space-y-1 animate-fade-in leading-relaxed">
+          <p className="font-bold text-emerald-300">💡 Rahsia WhatsApp Tak Compress Langsung:</p>
+          <p>
+            Hantar video ini ke chat sendiri (Message Yourself) atau kawan. Dari chat itu, tekan butang <strong>Forward (➡️) ke My Status</strong>. WhatsApp tidak pernah memampatkan video yang diforward!
+          </p>
         </div>
       )}
 
-      {/* Panduan Urutan Penghantaran */}
-      <div className="space-y-1">
-        <p className="text-xs font-semibold text-zinc-300 flex items-center gap-1.5">
-          <span>Hantar mengikut urutan (Klip 1 ➔ Seterusnya):</span>
-        </p>
-      </div>
+      {/* Notis share fallback */}
+      {shareNotice && (
+        <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center justify-between">
+          <span className="text-[11px]">{shareNotice}</span>
+          <button onClick={() => setShareNotice(null)} className="text-zinc-400 text-xs px-1">✕</button>
+        </div>
+      )}
 
-      {/* Senarai Klip Berturutan (Macam PureStatus) */}
-      <div className="space-y-3 max-h-96 overflow-y-auto pr-1">
+      {/* Senarai Klip (Clean & Simple) */}
+      <div className="space-y-2 max-h-72 overflow-y-auto pr-0.5">
         {clips.map((clip) => {
           const isSent = sentClips.includes(clip.index);
 
           return (
             <div
               key={clip.index}
-              className={`p-3.5 rounded-2xl border transition shadow-sm ${
+              className={`p-3 rounded-2xl border transition flex items-center justify-between gap-2.5 ${
                 isSent
-                  ? 'bg-zinc-950/40 border-emerald-500/20 opacity-80'
-                  : 'bg-zinc-950/80 border-white/10 hover:border-emerald-500/30'
+                  ? 'bg-zinc-950/40 border-emerald-500/20 opacity-75'
+                  : 'bg-zinc-950/70 border-white/5 hover:border-white/10'
               }`}
             >
-              <div className="flex items-center justify-between gap-3 mb-2.5">
-                <div className="flex items-center space-x-3 min-w-0">
-                  <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-black text-xs flex-shrink-0 ${
-                    isSent 
-                      ? 'bg-emerald-500/20 text-emerald-400 border border-emerald-500/30' 
-                      : 'bg-zinc-800 text-zinc-300 border border-white/10'
-                  }`}>
-                    {isSent ? <CheckCircle2 className="w-4 h-4 text-emerald-400" /> : `#${clip.index}`}
-                  </div>
-                  <div className="min-w-0">
-                    <p className="text-xs font-bold text-zinc-200 truncate flex items-center gap-1">
-                      <Film className="w-3 h-3 text-zinc-400" />
-                      Bahagian {clip.index} ({Math.round(clip.duration)}s)
-                    </p>
-                    <p className="text-[11px] text-zinc-400 font-mono">
-                      {clip.sizeMb.toFixed(1)} MB • {clip.startTime}s - {clip.endTime}s
-                    </p>
-                  </div>
+              {/* Info Klip */}
+              <div className="flex items-center space-x-2.5 min-w-0">
+                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 ${
+                  isSent ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-300'
+                }`}>
+                  {isSent ? <Check className="w-4 h-4 stroke-[3]" /> : clip.index}
                 </div>
+                <div className="min-w-0">
+                  <p className="text-xs font-bold text-zinc-200 truncate">
+                    Bahagian {clip.index}
+                  </p>
+                  <p className="text-[10px] text-zinc-400 font-mono">
+                    {Math.round(clip.duration)}s • {clip.sizeMb.toFixed(1)} MB
+                  </p>
+                </div>
+              </div>
 
-                {/* Butang Download Kecil untuk backup */}
+              {/* Action Buttons */}
+              <div className="flex items-center gap-1.5 flex-shrink-0">
+                <button
+                  onClick={() => handleShareToWhatsApp(clip)}
+                  disabled={sharingIndex === clip.index}
+                  className={`py-2 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm ${
+                    isSent
+                      ? 'bg-zinc-800 text-zinc-300 hover:text-white'
+                      : 'bg-[#25D366] hover:bg-[#20ba59] text-zinc-950 font-black'
+                  }`}
+                >
+                  <Share2 className="w-3.5 h-3.5" />
+                  <span>{isSent ? 'Hantar Lagi' : 'WhatsApp'}</span>
+                </button>
+
                 <button
                   onClick={() => onDownloadClip(clip)}
-                  className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-300 hover:text-white transition active:scale-95 text-xs flex items-center gap-1"
-                  title="Simpan Fail ke Galeri"
+                  className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition"
+                  title="Simpan Fail"
                 >
                   <Download className="w-3.5 h-3.5" />
                 </button>
               </div>
-
-              {/* Butang Utama Hantar Terus ke WhatsApp */}
-              <button
-                onClick={() => handleShareToWhatsApp(clip)}
-                disabled={sharingIndex === clip.index}
-                className={`w-full py-2.5 px-4 rounded-xl text-xs font-bold flex items-center justify-center gap-2 transition active:scale-[0.98] shadow-md ${
-                  isSent
-                    ? 'bg-zinc-800 hover:bg-zinc-700 text-zinc-300 border border-white/10'
-                    : 'bg-[#25D366] hover:bg-[#20ba59] text-zinc-950 font-black shadow-[#25D366]/20'
-                }`}
-              >
-                <Share2 className="w-3.5 h-3.5" />
-                <span>
-                  {isSent
-                    ? `Hantar Semula Bahagian ${clip.index} ke WhatsApp`
-                    : `Hantar Bahagian ${clip.index} Terus ke WhatsApp Status`}
-                </span>
-              </button>
             </div>
           );
         })}
       </div>
 
-      {/* Butang Muat Turun Semua (Pilihan Tambahan) */}
-      <div className="pt-2 border-t border-white/5">
+      {/* Download Semua (Discreet) */}
+      <div className="pt-1 flex items-center justify-between text-xs text-zinc-400">
         <button
           onClick={onDownloadAll}
-          className="w-full py-3 px-4 rounded-xl bg-zinc-800/80 hover:bg-zinc-700/80 text-zinc-300 hover:text-white text-xs font-semibold flex items-center justify-center gap-2 transition active:scale-95 border border-white/5"
+          className="hover:text-zinc-200 transition text-[11px] font-medium flex items-center gap-1"
         >
-          <Download className="w-3.5 h-3.5" />
-          <span>Simpan Semua Klip ({clips.length}) ke Telefon</span>
+          <Download className="w-3 h-3" />
+          <span>Simpan semua fail ke telefon</span>
         </button>
       </div>
     </div>

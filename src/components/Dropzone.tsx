@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { VideoMetadata } from '../types/optimizer';
-import { UploadCloud, CheckCircle2, X, Play, ShieldCheck } from 'lucide-react';
+import { Plus, X, Play, Video } from 'lucide-react';
 
 interface DropzoneProps {
   selectedVideo: VideoMetadata | null;
@@ -45,73 +45,57 @@ export const Dropzone: React.FC<DropzoneProps> = ({ selectedVideo, onSelectFile,
       />
 
       {!selectedVideo ? (
+        /* Minimalist File Picker Card */
         <div
           onDragOver={handleDragOver}
           onDragLeave={handleDragLeave}
           onDrop={handleDrop}
           onClick={() => !disabled && fileInputRef.current?.click()}
-          className={`relative group cursor-pointer overflow-hidden rounded-3xl border-2 border-dashed p-8 text-center transition-all duration-300 ${
+          className={`cursor-pointer rounded-3xl border transition-all duration-200 p-8 text-center flex flex-col items-center justify-center space-y-3 ${
             isDragOver
-              ? 'border-emerald-400 bg-emerald-500/10 shadow-[0_0_30px_rgba(16,185,129,0.25)] scale-[1.01]'
-              : 'border-white/10 hover:border-emerald-500/50 bg-zinc-900/40 hover:bg-zinc-900/70'
+              ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_25px_rgba(16,185,129,0.2)] scale-[1.01]'
+              : 'border-white/10 hover:border-emerald-500/40 bg-zinc-900/40 hover:bg-zinc-900/70 shadow-lg'
           }`}
         >
-          <div className="flex flex-col items-center justify-center space-y-3.5">
-            <div className="w-16 h-16 rounded-2xl bg-zinc-800/80 border border-white/5 flex items-center justify-center text-emerald-400 group-hover:scale-110 group-hover:bg-emerald-500/10 transition-transform shadow-md">
-              <UploadCloud className="w-8 h-8" />
-            </div>
-            <div>
-              <p className="text-base font-bold text-zinc-100">
-                Pilih atau Tarik Video ke Sini
-              </p>
-              <p className="text-xs text-zinc-400 mt-1">
-                Sokong fail MP4, MOV, reels, video kamera & galeri telefon
-              </p>
-            </div>
-            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-white/5 border border-white/10 text-[11px] text-zinc-300">
-              <ShieldCheck className="w-3.5 h-3.5 text-emerald-400" />
-              <span>100% Proses Pada Telefon (Zero Upload / Privasi Penuh)</span>
-            </div>
+          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-sm">
+            <Plus className="w-6 h-6 stroke-[2.5]" />
+          </div>
+          <div className="space-y-0.5">
+            <p className="text-base font-bold text-zinc-100 tracking-tight">
+              Pilih Video
+            </p>
+            <p className="text-xs text-zinc-400">
+              Auto potong 30s • 1080p Ultra HD
+            </p>
           </div>
         </div>
       ) : (
-        /* Video Selected Card */
-        <div className="rounded-3xl border border-white/10 bg-zinc-900/70 p-4.5 backdrop-blur-md shadow-xl">
-          <div className="flex items-start justify-between gap-3">
-            <div className="flex items-center space-x-3.5 min-w-0">
-              <div className="relative w-16 h-16 rounded-2xl overflow-hidden bg-black flex-shrink-0 border border-white/10 shadow-inner">
-                <video src={selectedVideo.previewUrl} className="w-full h-full object-cover" muted />
-                <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                  <Play className="w-4 h-4 text-white/90 fill-white/80" />
-                </div>
-                <div className="absolute bottom-1 right-1 bg-black/80 px-1 py-0.2 rounded text-[9px] font-mono font-bold text-white">
-                  {Math.floor(selectedVideo.durationSeconds)}s
-                </div>
-              </div>
-              <div className="min-w-0">
-                <p className="text-sm font-bold text-zinc-100 truncate">{selectedVideo.name}</p>
-                <p className="text-xs text-zinc-400 mt-0.5">
-                  Saiz: <span className="text-zinc-200 font-semibold">{selectedVideo.sizeMb.toFixed(1)} MB</span>
-                  {' • '}
-                  Durasi: <span className="text-zinc-200 font-semibold">{Math.round(selectedVideo.durationSeconds)}s</span>
-                </p>
-                <div className="mt-1 flex items-center gap-1.5 text-[11px] text-emerald-400 font-medium">
-                  <CheckCircle2 className="w-3.5 h-3.5 text-emerald-400" />
-                  <span>Sedia untuk dioptimumkan</span>
-                </div>
+        /* Video Selected - Minimal Row */
+        <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-md flex items-center justify-between gap-3">
+          <div className="flex items-center space-x-3 min-w-0">
+            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/10">
+              <video src={selectedVideo.previewUrl} className="w-full h-full object-cover" muted />
+              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
+                <Play className="w-3.5 h-3.5 text-white fill-white" />
               </div>
             </div>
-
-            {!disabled && (
-              <button
-                onClick={onClear}
-                className="p-2 rounded-xl text-zinc-400 hover:text-rose-400 hover:bg-rose-500/10 transition"
-                title="Tukar Video"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            )}
+            <div className="min-w-0">
+              <p className="text-xs font-bold text-zinc-200 truncate">{selectedVideo.name}</p>
+              <p className="text-[11px] text-zinc-400 font-mono mt-0.5">
+                {Math.round(selectedVideo.durationSeconds)}s • {selectedVideo.sizeMb.toFixed(1)} MB
+              </p>
+            </div>
           </div>
+
+          {!disabled && (
+            <button
+              onClick={onClear}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
+              title="Tukar Video"
+            >
+              <X className="w-4 h-4" />
+            </button>
+          )}
         </div>
       )}
     </div>
