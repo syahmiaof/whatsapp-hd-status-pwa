@@ -67,7 +67,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ selectedVideo, onSelectFile,
             type="button"
             onClick={openPicker}
             disabled={disabled}
-            className="mt-7 inline-flex min-h-12 w-full max-w-xs items-center justify-center gap-2 rounded-2xl bg-[#138c4b] px-5 text-sm font-bold text-white shadow-[0_6px_16px_rgba(19,140,75,0.18)] transition hover:bg-[#0e773f] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200"
+            className="mx-auto mt-7 inline-flex min-h-12 w-full max-w-xs items-center justify-center gap-2 rounded-2xl bg-[#138c4b] px-5 text-sm font-bold text-white shadow-[0_6px_16px_rgba(19,140,75,0.18)] transition hover:bg-[#0e773f] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200"
           >
             <FolderOpen className="h-4 w-4" />
             Pilih video
