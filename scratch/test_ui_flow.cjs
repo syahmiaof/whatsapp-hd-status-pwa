@@ -48,7 +48,7 @@ function run(command, args) {
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
     await page.goto(appUrl, { waitUntil: 'networkidle' });
-    await page.getByRole('button', { name: /3 hari trial/i }).waitFor({ timeout: 5_000 });
+    await page.getByText('Beta · Percuma').waitFor({ timeout: 5_000 });
     await page.getByRole('button', { name: 'Pilih video', exact: true }).waitFor({ timeout: 5_000 });
     if (screenshotDir) {
       fs.mkdirSync(screenshotDir, { recursive: true });
@@ -59,15 +59,16 @@ function run(command, args) {
       await desktopPage.screenshot({ path: path.join(screenshotDir, 'statushd-desktop-home.png'), fullPage: true });
       await desktopContext.close();
     }
-    await page.getByRole('button', { name: /3 hari trial/i }).click();
-    await page.getByRole('dialog').waitFor({ timeout: 5_000 });
-    await page.getByText('RM5', { exact: true }).waitFor({ timeout: 5_000 });
-    await page.getByRole('link', { name: /Minta cara bayaran DuitNow/ }).waitFor({ timeout: 5_000 });
-    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, 'statushd-mobile-paywall.png'), fullPage: true });
-    await page.getByRole('button', { name: 'Tutup' }).click();
     await page.locator('input[type="file"]').setInputFiles(inputPath);
     await page.getByRole('button', { name: 'Sediakan untuk WhatsApp' }).click();
     await page.getByText(/Klip Siap/).waitFor({ timeout: 180_000 });
+    await page.getByRole('button', { name: 'Preview' }).click();
+    const preview = page.getByLabel('Preview Bahagian 1');
+    await preview.waitFor({ timeout: 5_000 });
+    await preview.evaluate((element) => element.readyState >= 1 ? true : new Promise((resolve, reject) => {
+      element.addEventListener('loadedmetadata', resolve, { once: true });
+      element.addEventListener('error', () => reject(new Error('Output preview failed to load')), { once: true });
+    }));
 
     const downloadPromise = page.waitForEvent('download', { timeout: 15_000 });
     await page.getByTitle('Simpan Fail').click();

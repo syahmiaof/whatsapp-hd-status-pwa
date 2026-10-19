@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TranscodeClipResult } from '../types/optimizer';
-import { Download, Share2, Sparkles, RefreshCw, Check, Info, X } from 'lucide-react';
+import { Download, Share2, Sparkles, RefreshCw, Check, Info, X, Play, Eye } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ProcessedClipsCardProps {
@@ -20,6 +20,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
   const [sharedClips, setSharedClips] = useState<number[]>([]);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [showForwardTip, setShowForwardTip] = useState(false);
+  const [previewIndex, setPreviewIndex] = useState<number | null>(null);
 
   React.useEffect(() => {
     confetti({
@@ -89,7 +90,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
         <div className="flex min-w-0 items-start gap-1.5">
           <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#657067]" />
           <p className="text-[11px] leading-snug">
-            Share buka WhatsApp; pilih penerima atau Status jika tersedia. WhatsApp mungkin memampatkan video.
+            Preview dulu. Kalau dah kabur di sini, masalah pada fail output. Kalau tajam, WhatsApp mungkin encode semula masa dihantar sebagai video.
           </p>
         </div>
         <button
@@ -103,9 +104,9 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
       {/* Panduan WhatsApp yang jujur */}
       {showForwardTip && (
         <div className="animate-fade-in space-y-1 rounded-xl border border-[#dfe9e1] bg-[#f1f8f2] p-3 text-[11px] leading-relaxed text-[#3d5142]">
-          <p className="font-bold text-[#176b3b]">Cara hantar:</p>
+            <p className="font-bold text-[#176b3b]">Semak kualiti:</p>
           <p>
-            Jika share terus ke Status tak muncul: simpan fail, buka WhatsApp dan lampirkan dari Galeri. Pilih HD jika pilihan itu muncul. WhatsApp masih boleh memproses video semasa post; hasil akhir bergantung pada WhatsApp dan rangkaian.
+            Bandingkan video di preview ini dengan video selepas dihantar. WhatsApp boleh memampatkan media; StatusHD tak dapat kawal pemprosesan WhatsApp. Share sheet juga mungkin minta kau pilih WhatsApp secara manual.
           </p>
         </div>
       )}
@@ -124,16 +125,15 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
           const isShared = sharedClips.includes(clip.index);
 
           return (
-            <div
-              key={clip.index}
-              className={`p-3 rounded-2xl border transition flex items-center justify-between gap-2.5 ${
+            <div key={clip.index} className={`rounded-2xl border p-3 transition ${
                 isShared
                 ? 'border-[#d8e9dc] bg-[#f5faf6]'
                 : 'border-[#e9ede9] bg-white hover:border-[#cbd9cd]'
               }`}
             >
-              {/* Info Klip */}
-              <div className="flex min-w-0 items-center space-x-2.5">
+              <div className="flex items-center justify-between gap-2.5">
+                {/* Info Klip */}
+                <div className="flex min-w-0 items-center space-x-2.5">
                 <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
                   isShared ? 'bg-[#e3f4e7] text-[#168347]' : 'bg-[#f0f3f0] text-[#49564c]'
                 }`}>
@@ -147,10 +147,19 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
                     {Math.round(clip.duration)}s • {clip.sizeMb.toFixed(1)} MB
                   </p>
                 </div>
-              </div>
+                </div>
 
-              {/* Action Buttons */}
-              <div className="flex flex-shrink-0 items-center gap-1.5">
+                {/* Action Buttons */}
+                <div className="flex flex-shrink-0 items-center gap-1.5">
+                <button
+                  type="button"
+                  onClick={() => setPreviewIndex(previewIndex === clip.index ? null : clip.index)}
+                  aria-expanded={previewIndex === clip.index}
+                  className="flex min-h-9 items-center gap-1 rounded-xl bg-[#f0f3f0] px-2.5 text-xs font-semibold text-[#455247] transition hover:bg-[#e7eee8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
+                >
+                  {previewIndex === clip.index ? <Eye className="h-3.5 w-3.5" /> : <Play className="h-3.5 w-3.5" />}
+                  <span>{previewIndex === clip.index ? 'Tutup' : 'Preview'}</span>
+                </button>
                 <button
                   onClick={() => handleShareToWhatsApp(clip)}
                   disabled={sharingIndex === clip.index}
@@ -172,6 +181,18 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
                   <Download className="w-3.5 h-3.5" />
                 </button>
               </div>
+              </div>
+              {previewIndex === clip.index && (
+                <video
+                  key={clip.downloadUrl}
+                  src={clip.downloadUrl}
+                  controls
+                  playsInline
+                  preload="metadata"
+                  aria-label={`Preview Bahagian ${clip.index}`}
+                  className="mt-3 max-h-[55vh] w-full rounded-xl bg-black object-contain"
+                />
+              )}
             </div>
           );
         })}

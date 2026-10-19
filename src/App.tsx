@@ -4,7 +4,6 @@ import { Dropzone } from './components/Dropzone';
 import { SettingsCard } from './components/SettingsCard';
 import { TranscodeProgress } from './components/TranscodeProgress';
 import { ProcessedClipsCard } from './components/ProcessedClipsCard';
-import { PaywallModal } from './components/PaywallModal';
 import {
   VideoMetadata,
   OptimizerSettings,
@@ -12,7 +11,6 @@ import {
   TranscodeClipResult
 } from './types/optimizer';
 import { transcodeAndSplitVideo, terminateFFmpeg } from './lib/ffmpegEngine';
-import { initTrial, activateVipKey } from './lib/trialManager';
 import { Zap, AlertTriangle } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -28,10 +26,6 @@ export const App: React.FC = () => {
   const [etaSeconds, setEtaSeconds] = useState<number | null>(null);
   const [clips, setClips] = useState<TranscodeClipResult[]>([]);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
-
-  // Status Langganan & Percubaan
-  const [trialState, setTrialState] = useState(() => initTrial());
-  const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
   // Kawalan Pembatalan Transcode
   const abortControllerRef = useRef<AbortController | null>(null);
@@ -60,7 +54,6 @@ export const App: React.FC = () => {
   };
 
   useEffect(() => {
-    setTrialState(initTrial());
     return () => {
       // Pembersihan semasa komponen dinyahpasang
       if (abortControllerRef.current) {
@@ -135,12 +128,6 @@ export const App: React.FC = () => {
 
   const handleStartTranscoding = async () => {
     if (!video) return;
-
-    // Semak jika tempoh percubaan tamat dan belum bayar
-    if (trialState.daysLeft <= 0 && !trialState.isSubscribed) {
-      setIsPaywallOpen(true);
-      return;
-    }
 
     setErrorMessage(null);
     setStage('loading-wasm');
@@ -231,11 +218,7 @@ export const App: React.FC = () => {
   return (
     <div className="flex min-h-screen flex-col bg-[#f5f7f4] font-sans text-[#172019] selection:bg-emerald-200 selection:text-[#102016]">
       {/* 1. Header Navigation */}
-      <Header
-        trialDaysLeft={trialState.daysLeft}
-        isSubscribed={trialState.isSubscribed}
-        onOpenPaywall={() => setIsPaywallOpen(true)}
-      />
+      <Header />
 
       {/* 2. Main Content */}
       <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 pb-8 pt-5 sm:px-6 sm:pt-7">
@@ -308,18 +291,6 @@ export const App: React.FC = () => {
         <p>Video diproses dalam telefon anda · Tak dimuat naik ke server</p>
       </footer>
 
-      {/* 4. Modal Paywall */}
-      <PaywallModal
-        isOpen={isPaywallOpen}
-        onClose={() => setIsPaywallOpen(false)}
-        onActivateKey={(key) => {
-          const success = activateVipKey(key);
-          if (success) {
-            setTrialState({ daysLeft: 999, isSubscribed: true });
-          }
-          return success;
-        }}
-      />
     </div>
   );
 };
