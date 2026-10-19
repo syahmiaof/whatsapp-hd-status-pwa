@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { X, Check, QrCode, ArrowRight } from 'lucide-react';
+import { ArrowRight, Check, Crown, X } from 'lucide-react';
 import { getDeviceId } from '../lib/trialManager';
 
 interface PaywallModalProps {
@@ -15,122 +15,100 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onA
 
   if (!isOpen) return null;
 
-  const handleKeySubmit = (e: React.FormEvent) => {
-    e.preventDefault();
+  const handleKeySubmit = (event: React.FormEvent) => {
+    event.preventDefault();
     if (!activationKey.trim()) return;
-    const success = onActivateKey(activationKey.trim());
-    if (success) {
+    if (onActivateKey(activationKey.trim())) {
       onClose();
-    } else {
-      setKeyError('Kunci VIP tidak sah. Sila semak semula atau hubungi admin.');
+      return;
     }
+    setKeyError('Kunci tak sah. Semak semula atau minta bantuan admin.');
   };
 
   const whatsappLink = `https://wa.me/601123456789?text=${encodeURIComponent(
-    `Hai Admin StatusHD, saya nak langgan VIP RM5/bulan (Pakej Jimat).\nKod Peranti: ${referenceCode}\n(Saya lampirkan resit DuitNow)`
+    `Hai Admin StatusHD, saya nak aktifkan StatusHD VIP RM5/bulan.\nID rujukan: ${referenceCode}\nBoleh beri cara bayaran DuitNow dan kunci VIP?`
   )}`;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/85 backdrop-blur-md animate-fade-in">
-      <div className="relative w-full max-w-sm rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl space-y-5">
-        {/* Butang Tutup */}
+    <div className="fixed inset-0 z-50 flex items-end justify-center bg-[#152018]/45 p-0 backdrop-blur-[2px] sm:items-center sm:p-4" onMouseDown={(event) => event.target === event.currentTarget && onClose()}>
+      <section
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="paywall-title"
+        className="relative max-h-[90dvh] w-full max-w-md overflow-y-auto rounded-t-[28px] border border-[#e6ebe6] bg-white p-5 pb-[max(20px,env(safe-area-inset-bottom))] shadow-[0_18px_60px_rgba(14,30,18,0.2)] sm:rounded-[28px] sm:p-6"
+      >
         <button
+          type="button"
           onClick={onClose}
-          className="absolute top-4 right-4 p-2 text-zinc-400 hover:text-white rounded-full bg-white/5 hover:bg-white/10 transition"
+          aria-label="Tutup"
+          className="absolute right-4 top-4 flex h-9 w-9 items-center justify-center rounded-full bg-[#f2f5f2] text-[#59665b] transition hover:bg-[#e7eee8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
         >
-          <X className="w-4 h-4" />
+          <X className="h-4 w-4" />
         </button>
 
-        {/* Header Paywall */}
-        <div className="text-center space-y-1.5 pt-2">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
-            <QrCode className="w-3.5 h-3.5" />
-            <span>Pakej Kuantiti Jimat</span>
-          </div>
-          <h2 className="text-2xl font-black text-zinc-100 tracking-tight">
-            StatusHD VIP
+        <div className="pt-2">
+          <span className="inline-flex items-center gap-1.5 rounded-full bg-[#e9f7ed] px-3 py-1.5 text-xs font-semibold text-[#176b3b]">
+            <Crown className="h-3.5 w-3.5" /> StatusHD VIP
+          </span>
+          <h2 id="paywall-title" className="mt-4 text-2xl font-bold tracking-[-0.03em] text-[#172019]">
+            Teruskan guna StatusHD
           </h2>
-          <div className="flex items-baseline justify-center gap-1.5">
-            <span className="text-4xl font-black text-emerald-400">RM5</span>
-            <span className="text-xs text-zinc-400 font-semibold">/ sebulan</span>
-          </div>
-          <p className="text-xs text-zinc-400">Harga secawan teh ais! Jauh lebih murah daripada PureStatus (RM49/thn)</p>
-        </div>
-
-        {/* Kelebihan */}
-        <div className="space-y-2 text-xs text-zinc-300 bg-zinc-900/60 p-4 rounded-2xl border border-white/5">
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-              <Check className="w-3 h-3 stroke-[3]" />
-            </span>
-            Output sehingga 1080p, diproses terus dalam telefon
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-              <Check className="w-3 h-3 stroke-[3]" />
-            </span>
-            Auto-split 30 saat tanpa had video
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
-              <Check className="w-3 h-3 stroke-[3]" />
-            </span>
-            100% proses atas telefon (laju & privasi)
-          </div>
-        </div>
-
-        {/* DuitNow QR Box */}
-        <div className="text-center space-y-2.5">
-          <p className="text-xs font-semibold text-zinc-300">Imbas DuitNow QR untuk bayaran:</p>
-          <div className="mx-auto w-36 h-36 bg-white rounded-2xl p-2.5 flex items-center justify-center shadow-lg shadow-white/5">
-            <img
-              src={`https://api.qrserver.com/v1/create-qr-code/?size=150x150&data=DUITNOW-STATUSHD-${referenceCode}`}
-              alt="DuitNow QR Code"
-              className="w-full h-full object-contain"
-            />
-          </div>
-          <p className="text-[11px] font-mono text-zinc-400">
-            ID Rujukan: <span className="text-emerald-400 font-bold">{referenceCode}</span>
+          <p className="mt-1.5 text-sm leading-6 text-[#657067]">
+            {trialDaysMessage()}
           </p>
-        </div>
 
-        {/* Butang WhatsApp Pengesahan */}
-        <a
-          href={whatsappLink}
-          target="_blank"
-          rel="noopener noreferrer"
-          className="w-full py-3.5 px-4 rounded-2xl bg-[#25D366] hover:bg-[#20ba59] text-zinc-950 font-black text-xs flex items-center justify-center gap-2 transition active:scale-95 shadow-lg shadow-[#25D366]/25"
-        >
-          <span>Hantar Bukti Pembayaran ke WhatsApp</span>
-          <ArrowRight className="w-3.5 h-3.5" />
-        </a>
-
-        {/* Input Kunci Pengaktifan */}
-        <form onSubmit={handleKeySubmit} className="pt-2 border-t border-white/5 space-y-2">
-          <label className="text-[11px] text-zinc-400 block text-center font-medium">
-            Ada kunci pengaktifan atau kod VIP?
-          </label>
-          <div className="flex gap-2">
-            <input
-              type="text"
-              placeholder="Contoh: HD-A8F2K9M1-C4E2 atau BOSSKITA"
-              value={activationKey}
-              onChange={(e) => {
-                setActivationKey(e.target.value);
-                setKeyError('');
-              }}
-              className="w-full bg-zinc-900 border border-white/10 rounded-xl px-3 py-2 text-xs text-zinc-100 placeholder-zinc-500 focus:outline-none focus:border-emerald-500 font-mono"
-            />
-            <button
-              type="submit"
-              className="px-4 py-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-200 text-xs font-bold transition active:scale-95"
-            >
-              Aktif
-            </button>
+          <div className="mt-5 flex items-baseline gap-1.5 border-b border-[#edf0ed] pb-5">
+            <span className="text-4xl font-extrabold tracking-[-0.04em] text-[#168347]">RM5</span>
+            <span className="text-sm font-medium text-[#657067]">/ bulan</span>
           </div>
-          {keyError && <p className="text-[11px] text-rose-400 text-center font-medium">{keyError}</p>}
-        </form>
-      </div>
+
+          <ul className="mt-5 space-y-3 text-sm text-[#344238]">
+            <li className="flex items-center gap-2.5"><Check className="h-4 w-4 flex-shrink-0 text-[#168347]" /> Output sehingga 1080p</li>
+            <li className="flex items-center gap-2.5"><Check className="h-4 w-4 flex-shrink-0 text-[#168347]" /> Auto-split video setiap 30 saat</li>
+            <li className="flex items-center gap-2.5"><Check className="h-4 w-4 flex-shrink-0 text-[#168347]" /> Video diproses terus dalam telefon</li>
+          </ul>
+
+          <a
+            href={whatsappLink}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-6 flex min-h-12 w-full items-center justify-center gap-2 rounded-2xl bg-[#168347] px-4 text-sm font-bold text-white transition hover:bg-[#0e773f] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200"
+          >
+            Minta cara bayaran DuitNow <ArrowRight className="h-4 w-4" />
+          </a>
+          <p className="mt-2 text-center text-xs leading-5 text-[#778178]">
+            Bayaran manual. Admin beri kunci VIP selepas pengesahan; tiada caj automatik.
+          </p>
+
+          <form onSubmit={handleKeySubmit} className="mt-5 border-t border-[#edf0ed] pt-4">
+            <label htmlFor="activation-key" className="text-xs font-semibold text-[#48554a]">
+              Dah ada kunci VIP?
+            </label>
+            <div className="mt-2 flex gap-2">
+              <input
+                id="activation-key"
+                type="text"
+                autoComplete="off"
+                placeholder="Masukkan kunci VIP"
+                value={activationKey}
+                onChange={(event) => {
+                  setActivationKey(event.target.value);
+                  setKeyError('');
+                }}
+                className="min-w-0 flex-1 rounded-xl border border-[#dce4dd] bg-white px-3 py-2.5 text-sm text-[#202a22] placeholder:text-[#929b93] focus:border-[#168347] focus:outline-none focus:ring-2 focus:ring-emerald-100"
+              />
+              <button type="submit" className="rounded-xl bg-[#f0f3f0] px-4 text-sm font-semibold text-[#344238] transition hover:bg-[#e7eee8] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300">
+                Aktifkan
+              </button>
+            </div>
+            {keyError && <p role="alert" className="mt-2 text-xs text-rose-700">{keyError}</p>}
+          </form>
+        </div>
+      </section>
     </div>
   );
 };
+
+function trialDaysMessage(): string {
+  return 'Trial percuma 3 hari. Selepas itu, RM5 sebulan melalui bayaran manual.';
+}

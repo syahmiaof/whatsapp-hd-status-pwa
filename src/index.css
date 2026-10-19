@@ -3,8 +3,16 @@
 @tailwind utilities;
 
 @layer base {
+  :root {
+    color-scheme: light;
+    font-synthesis: none;
+    text-rendering: optimizeLegibility;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+  }
+
   body {
-    @apply bg-zinc-950 text-zinc-100 font-sans;
+    @apply bg-[#f5f7f4] font-sans text-[#172019];
     -webkit-tap-highlight-color: transparent;
   }
 }
@@ -15,15 +23,15 @@
   height: 5px;
 }
 ::-webkit-scrollbar-track {
-  background: rgba(24, 24, 27, 0.5);
+  background: #edf1ed;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb {
-  background: rgba(255, 255, 255, 0.15);
+  background: #c8d2ca;
   border-radius: 9999px;
 }
 ::-webkit-scrollbar-thumb:hover {
-  background: rgba(16, 185, 129, 0.4);
+  background: #168347;
 }
 
 @keyframes fadeIn {

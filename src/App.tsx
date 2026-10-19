@@ -13,7 +13,7 @@ import {
 } from './types/optimizer';
 import { transcodeAndSplitVideo, terminateFFmpeg } from './lib/ffmpegEngine';
 import { initTrial, activateVipKey } from './lib/trialManager';
-import { Zap, AlertTriangle, Sparkles } from 'lucide-react';
+import { Zap, AlertTriangle } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [video, setVideo] = useState<VideoMetadata | null>(null);
@@ -229,7 +229,7 @@ export const App: React.FC = () => {
   };
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-zinc-100 flex flex-col font-sans selection:bg-emerald-500 selection:text-black">
+    <div className="flex min-h-screen flex-col bg-[#f5f7f4] font-sans text-[#172019] selection:bg-emerald-200 selection:text-[#102016]">
       {/* 1. Header Navigation */}
       <Header
         trialDaysLeft={trialState.daysLeft}
@@ -238,28 +238,12 @@ export const App: React.FC = () => {
       />
 
       {/* 2. Main Content */}
-      <main className="flex-1 max-w-md w-full mx-auto px-4 py-5 space-y-3.5">
+      <main className="mx-auto flex w-full max-w-lg flex-1 flex-col gap-4 px-4 pb-8 pt-5 sm:px-6 sm:pt-7">
         {/* Ralat jika ada */}
         {errorMessage && (
-          <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400" />
+          <div role="alert" className="flex items-center gap-2 rounded-2xl border border-rose-200 bg-rose-50 p-3 text-xs text-rose-800">
+            <AlertTriangle className="h-4 w-4 flex-shrink-0 text-rose-600" />
             <p>{errorMessage}</p>
-          </div>
-        )}
-
-        {/* Hero Section Ringkas */}
-        {!video && stage === 'idle' && (
-          <div className="text-center space-y-2 pt-2 pb-1 animate-fade-in">
-            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
-              <Sparkles className="w-3.5 h-3.5" />
-              <span>Siap untuk WhatsApp • Auto 30s</span>
-            </div>
-            <h2 className="text-xl font-extrabold text-zinc-100 tracking-tight">
-              Sediakan video untuk WhatsApp Status.
-            </h2>
-            <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
-              Pilih 720p atau 1080p; video diproses dalam telefon. WhatsApp mungkin memampatkannya semasa dimuat naik.
-            </p>
           </div>
         )}
 
@@ -276,10 +260,10 @@ export const App: React.FC = () => {
           <div className="space-y-3 animate-fade-in">
             <button
               onClick={handleStartTranscoding}
-              className="w-full py-3.5 rounded-2xl bg-gradient-to-r from-emerald-500 via-teal-400 to-green-500 hover:brightness-110 text-zinc-950 font-black text-sm shadow-[0_0_25px_rgba(16,185,129,0.25)] transition active:scale-[0.98] flex items-center justify-center gap-2"
+              className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#138c4b] py-3.5 text-sm font-bold text-white shadow-[0_6px_16px_rgba(19,140,75,0.18)] transition hover:bg-[#0e773f] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200"
             >
-              <Zap className="w-4 h-4 fill-current" />
-              <span>Tukar ke Status HD</span>
+              <Zap className="h-4 w-4" />
+              <span>Sediakan untuk WhatsApp</span>
             </button>
 
             <SettingsCard
@@ -320,8 +304,8 @@ export const App: React.FC = () => {
       </main>
 
       {/* 3. Footer */}
-      <footer className="py-4 text-center text-xs text-zinc-600 border-t border-white/5">
-        <p>StatusHD PWA • Dikuasakan oleh FFmpeg WebAssembly • 100% Client-Side</p>
+      <footer className="border-t border-[#e6ebe6] px-4 py-4 text-center text-[11px] text-[#778178]">
+        <p>Video diproses dalam telefon anda · Tak dimuat naik ke server</p>
       </footer>
 
       {/* 4. Modal Paywall */}

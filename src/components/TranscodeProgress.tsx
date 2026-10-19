@@ -35,36 +35,36 @@ export const TranscodeProgress: React.FC<TranscodeProgressProps> = ({
   };
 
   return (
-    <div className="rounded-3xl border border-emerald-500/30 bg-zinc-900/80 p-6 space-y-4 backdrop-blur-md shadow-[0_0_30px_rgba(16,185,129,0.12)]">
+    <div className="space-y-4 rounded-3xl border border-[#dfe9e1] bg-white p-5 shadow-[0_8px_24px_rgba(23,32,25,0.06)] sm:p-6">
       <div className="flex items-center justify-between">
         <div className="flex items-center space-x-2.5">
-          <Loader2 className="w-5 h-5 text-emerald-400 animate-spin" />
-          <span className="text-sm font-bold text-zinc-100">{getStageLabel()}</span>
+          <Loader2 className="h-5 w-5 animate-spin text-[#168347]" />
+          <span className="text-sm font-bold text-[#202a22]">{getStageLabel()}</span>
         </div>
-        <span className="text-base font-mono font-extrabold text-emerald-400">
+        <span className="font-mono text-base font-extrabold tabular-nums text-[#168347]">
           {Math.round(progressPercent)}%
         </span>
       </div>
 
       {/* Progress Track */}
-      <div className="relative w-full h-3.5 bg-zinc-800/90 rounded-full overflow-hidden p-[2px] border border-white/5">
+      <div className="relative h-3.5 w-full overflow-hidden rounded-full border border-[#e7ece7] bg-[#f0f3f0] p-[2px]">
         <div
-          className="h-full bg-gradient-to-r from-teal-500 via-emerald-400 to-green-400 rounded-full transition-all duration-300 ease-out shadow-[0_0_15px_rgba(16,185,129,0.5)]"
+          className="h-full rounded-full bg-[#168347] transition-all duration-300 ease-out"
           style={{ width: `${Math.max(5, Math.min(progressPercent, 100))}%` }}
         />
       </div>
 
-      <div className="flex items-center justify-between text-xs text-zinc-400 pt-1">
+      <div className="flex items-center justify-between pt-1 text-xs text-[#68746a]">
         <span>
           {secondsRemaining !== null && secondsRemaining > 0 ? (
-            <>Baki anggaran masa: <strong className="text-zinc-200 font-mono">~{secondsRemaining}s</strong></>
+            <>Anggaran baki: <strong className="font-mono tabular-nums text-[#344238]">~{secondsRemaining}s</strong></>
           ) : (
             'Sedang memproses secara lokal...'
           )}
         </span>
         <button
           onClick={onCancel}
-          className="text-zinc-400 hover:text-rose-400 transition text-[11px] font-semibold underline"
+          className="text-[11px] font-semibold text-[#68746a] underline underline-offset-2 transition hover:text-rose-600 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-rose-300"
         >
           Batal
         </button>

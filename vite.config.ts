@@ -12,8 +12,8 @@ export default defineConfig({
         name: 'StatusHD: WhatsApp Video Splitter',
         short_name: 'StatusHD',
         description: 'Sediakan dan potong video untuk WhatsApp Status; pemprosesan dibuat dalam telefon',
-        theme_color: '#09090b',
-        background_color: '#09090b',
+        theme_color: '#f5f7f4',
+        background_color: '#f5f7f4',
         display: 'standalone',
         orientation: 'portrait',
         icons: [

@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TranscodeClipResult } from '../types/optimizer';
-import { Download, Share2, Sparkles, RefreshCw, Check } from 'lucide-react';
+import { Download, Share2, Sparkles, RefreshCw, Check, Info, X } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ProcessedClipsCardProps {
@@ -69,29 +69,32 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
   };
 
   return (
-    <div className="rounded-3xl border border-emerald-500/20 bg-zinc-900/70 p-4 space-y-3.5 backdrop-blur-md shadow-xl">
+    <div className="space-y-3.5 rounded-3xl border border-[#e1e9e2] bg-white p-4 shadow-[0_10px_28px_rgba(23,32,25,0.07)]">
       {/* Header */}
-      <div className="flex items-center justify-between pb-2.5 border-b border-white/5">
-        <div className="flex items-center gap-1.5 text-zinc-100 font-bold text-sm">
-          <Sparkles className="w-4 h-4 text-emerald-400" />
+      <div className="flex items-center justify-between border-b border-[#edf0ed] pb-2.5">
+        <div className="flex items-center gap-1.5 text-sm font-bold text-[#202a22]">
+          <Sparkles className="h-4 w-4 text-[#168347]" />
           <span>Klip Siap ({clips.length} Bahagian)</span>
         </div>
         <button
           onClick={onReset}
-          className="text-xs text-zinc-400 hover:text-white transition py-1 px-2.5 rounded-lg bg-white/5 hover:bg-white/10 flex items-center gap-1"
+          className="flex items-center gap-1 rounded-lg bg-[#f1f5f1] px-2.5 py-1 text-xs text-[#59665b] transition hover:bg-[#e7eee8] hover:text-[#263429] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
         >
           <RefreshCw className="w-3 h-3" /> Baru
         </button>
       </div>
 
       {/* Cara hantar ke Status */}
-      <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center justify-between gap-2">
-        <p className="text-[11px] leading-tight">
-          ℹ️ Share buka WhatsApp; pilih penerima atau Status jika tersedia. WhatsApp mungkin memampatkan video.
-        </p>
+      <div className="flex items-center justify-between gap-2 rounded-xl border border-[#e6ebe6] bg-[#f7f9f7] p-2.5 text-xs text-[#526055]">
+        <div className="flex min-w-0 items-start gap-1.5">
+          <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#657067]" />
+          <p className="text-[11px] leading-snug">
+            Share buka WhatsApp; pilih penerima atau Status jika tersedia. WhatsApp mungkin memampatkan video.
+          </p>
+        </div>
         <button
           onClick={() => setShowForwardTip(!showForwardTip)}
-          className="text-[10px] text-amber-400 font-bold underline whitespace-nowrap"
+          className="whitespace-nowrap text-[10px] font-bold text-[#176b3b] underline underline-offset-2 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
         >
           {showForwardTip ? 'Tutup' : 'Cara terbaik?'}
         </button>
@@ -99,8 +102,8 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
 
       {/* Panduan WhatsApp yang jujur */}
       {showForwardTip && (
-        <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-200 text-[11px] space-y-1 animate-fade-in leading-relaxed">
-          <p className="font-bold text-emerald-300">Cara hantar dengan kawalan kualiti terbaik:</p>
+        <div className="animate-fade-in space-y-1 rounded-xl border border-[#dfe9e1] bg-[#f1f8f2] p-3 text-[11px] leading-relaxed text-[#3d5142]">
+          <p className="font-bold text-[#176b3b]">Cara hantar:</p>
           <p>
             Jika share terus ke Status tak muncul: simpan fail, buka WhatsApp dan lampirkan dari Galeri. Pilih HD jika pilihan itu muncul. WhatsApp masih boleh memproses video semasa post; hasil akhir bergantung pada WhatsApp dan rangkaian.
           </p>
@@ -109,14 +112,14 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
 
       {/* Notis share fallback */}
       {shareNotice && (
-        <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-300 text-xs flex items-center justify-between">
+        <div role="status" className="flex items-center justify-between rounded-xl border border-[#dfe9e1] bg-[#f1f8f2] p-2.5 text-xs text-[#34503c]">
           <span className="text-[11px]">{shareNotice}</span>
-          <button onClick={() => setShareNotice(null)} className="text-zinc-400 text-xs px-1">✕</button>
+          <button onClick={() => setShareNotice(null)} aria-label="Tutup notis" className="px-1 text-[#66746a] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"><X className="h-3.5 w-3.5" /></button>
         </div>
       )}
 
       {/* Senarai Klip (Clean & Simple) */}
-      <div className="space-y-2 max-h-72 overflow-y-auto pr-0.5">
+      <div className="max-h-72 space-y-2 overflow-y-auto pr-0.5">
         {clips.map((clip) => {
           const isShared = sharedClips.includes(clip.index);
 
@@ -125,36 +128,36 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
               key={clip.index}
               className={`p-3 rounded-2xl border transition flex items-center justify-between gap-2.5 ${
                 isShared
-                  ? 'bg-zinc-950/40 border-emerald-500/20 opacity-75'
-                  : 'bg-zinc-950/70 border-white/5 hover:border-white/10'
+                ? 'border-[#d8e9dc] bg-[#f5faf6]'
+                : 'border-[#e9ede9] bg-white hover:border-[#cbd9cd]'
               }`}
             >
               {/* Info Klip */}
-              <div className="flex items-center space-x-2.5 min-w-0">
-                <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 ${
-                  isShared ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-300'
+              <div className="flex min-w-0 items-center space-x-2.5">
+                <div className={`flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-lg text-xs font-bold ${
+                  isShared ? 'bg-[#e3f4e7] text-[#168347]' : 'bg-[#f0f3f0] text-[#49564c]'
                 }`}>
                   {isShared ? <Check className="w-4 h-4 stroke-[3]" /> : clip.index}
                 </div>
                 <div className="min-w-0">
-                  <p className="text-xs font-bold text-zinc-200 truncate">
+                  <p className="truncate text-xs font-bold text-[#263129]">
                     Bahagian {clip.index}
                   </p>
-                  <p className="text-[10px] text-zinc-400 font-mono">
+                  <p className="font-mono text-[10px] tabular-nums text-[#768078]">
                     {Math.round(clip.duration)}s • {clip.sizeMb.toFixed(1)} MB
                   </p>
                 </div>
               </div>
 
               {/* Action Buttons */}
-              <div className="flex items-center gap-1.5 flex-shrink-0">
+              <div className="flex flex-shrink-0 items-center gap-1.5">
                 <button
                   onClick={() => handleShareToWhatsApp(clip)}
                   disabled={sharingIndex === clip.index}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm ${
                     isShared
-                      ? 'bg-zinc-800 text-zinc-300 hover:text-white'
-                      : 'bg-[#25D366] hover:bg-[#20ba59] text-zinc-950 font-black'
+                    ? 'bg-[#f0f3f0] text-[#455247] hover:bg-[#e7eee8]'
+                    : 'bg-[#168347] text-white hover:bg-[#0e773f]'
                   }`}
                 >
                   <Share2 className="w-3.5 h-3.5" />
@@ -163,7 +166,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
 
                 <button
                   onClick={() => onDownloadClip(clip)}
-                  className="p-2 rounded-xl bg-zinc-800 hover:bg-zinc-700 text-zinc-400 hover:text-white transition"
+                  className="rounded-xl bg-[#f0f3f0] p-2 text-[#5f6b61] transition hover:bg-[#e7eee8] hover:text-[#263429] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
                   title="Simpan Fail"
                 >
                   <Download className="w-3.5 h-3.5" />
@@ -175,10 +178,10 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
       </div>
 
       {/* Download Semua (Discreet) */}
-      <div className="pt-1 flex items-center justify-between text-xs text-zinc-400">
+      <div className="flex items-center justify-between pt-1 text-xs text-[#68746a]">
         <button
           onClick={onDownloadAll}
-          className="hover:text-zinc-200 transition text-[11px] font-medium flex items-center gap-1"
+          className="flex items-center gap-1 text-[11px] font-medium transition hover:text-[#263429] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
         >
           <Download className="w-3 h-3" />
           <span>Simpan semua fail ke telefon</span>

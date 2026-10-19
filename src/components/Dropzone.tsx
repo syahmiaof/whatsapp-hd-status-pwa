@@ -1,6 +1,6 @@
 import React, { useRef, useState } from 'react';
 import { VideoMetadata } from '../types/optimizer';
-import { Plus, X, Play, Video } from 'lucide-react';
+import { Film, FolderOpen, Play, X } from 'lucide-react';
 
 interface DropzoneProps {
   selectedVideo: VideoMetadata | null;
@@ -13,21 +13,16 @@ export const Dropzone: React.FC<DropzoneProps> = ({ selectedVideo, onSelectFile,
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isDragOver, setIsDragOver] = useState(false);
 
-  const handleDragOver = (e: React.DragEvent) => {
-    e.preventDefault();
-    if (!disabled) setIsDragOver(true);
+  const openPicker = () => {
+    if (!disabled) fileInputRef.current?.click();
   };
 
-  const handleDragLeave = () => setIsDragOver(false);
-
-  const handleDrop = (e: React.DragEvent) => {
-    e.preventDefault();
+  const handleDrop = (event: React.DragEvent<HTMLDivElement>) => {
+    event.preventDefault();
     setIsDragOver(false);
     if (disabled) return;
-    const files = e.dataTransfer.files;
-    if (files.length > 0 && files[0].type.startsWith('video/')) {
-      onSelectFile(files[0]);
-    }
+    const file = event.dataTransfer.files[0];
+    if (file) onSelectFile(file);
   };
 
   return (
@@ -35,67 +30,86 @@ export const Dropzone: React.FC<DropzoneProps> = ({ selectedVideo, onSelectFile,
       <input
         ref={fileInputRef}
         type="file"
-        accept="video/mp4,video/quicktime,video/webm,video/*"
-        className="hidden"
-        onChange={(e) => {
-          if (e.target.files && e.target.files[0]) {
-            onSelectFile(e.target.files[0]);
-          }
+        accept="video/*"
+        aria-label="Pilih video dari galeri"
+        className="sr-only"
+        onChange={(event) => {
+          const file = event.target.files?.[0];
+          if (file) onSelectFile(file);
+          event.currentTarget.value = '';
         }}
       />
 
       {!selectedVideo ? (
-        /* Minimalist File Picker Card */
         <div
-          onDragOver={handleDragOver}
-          onDragLeave={handleDragLeave}
+          onDragOver={(event) => {
+            event.preventDefault();
+            if (!disabled) setIsDragOver(true);
+          }}
+          onDragLeave={() => setIsDragOver(false)}
           onDrop={handleDrop}
-          onClick={() => !disabled && fileInputRef.current?.click()}
-          className={`cursor-pointer rounded-3xl border transition-all duration-200 p-8 text-center flex flex-col items-center justify-center space-y-3 ${
+          className={`flex min-h-[min(66dvh,560px)] flex-col justify-center px-2 py-8 text-center transition-colors ${
             isDragOver
-              ? 'border-emerald-500 bg-emerald-500/10 shadow-[0_0_25px_rgba(16,185,129,0.2)] scale-[1.01]'
-              : 'border-white/10 hover:border-emerald-500/40 bg-zinc-900/40 hover:bg-zinc-900/70 shadow-lg'
+              ? 'rounded-3xl bg-emerald-50'
+              : ''
           }`}
         >
-          <div className="w-14 h-14 rounded-2xl bg-emerald-500/10 border border-emerald-500/25 flex items-center justify-center text-emerald-400 shadow-sm">
-            <Plus className="w-6 h-6 stroke-[2.5]" />
+          <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-2xl bg-[#e9f7ed] text-[#137a40]">
+            <Film className="h-6 w-6" strokeWidth={1.8} />
           </div>
-          <div className="space-y-0.5">
-            <p className="text-base font-bold text-zinc-100 tracking-tight">
-              Pilih Video
-            </p>
-            <p className="text-xs text-zinc-400">
-              Auto potong 30s • sehingga 1080p
-            </p>
-          </div>
+          <h2 className="mt-5 text-[23px] font-bold tracking-[-0.03em] text-[#171d18]">
+            Pilih video dari galeri
+          </h2>
+          <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[#657067]">
+            Pilih satu video. StatusHD akan potong 30 saat dan sediakan untuk WhatsApp.
+          </p>
+          <button
+            type="button"
+            onClick={openPicker}
+            disabled={disabled}
+            className="mt-7 inline-flex min-h-12 w-full max-w-xs items-center justify-center gap-2 rounded-2xl bg-[#138c4b] px-5 text-sm font-bold text-white shadow-[0_6px_16px_rgba(19,140,75,0.18)] transition hover:bg-[#0e773f] active:scale-[0.99] disabled:cursor-not-allowed disabled:opacity-50 focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200"
+          >
+            <FolderOpen className="h-4 w-4" />
+            Pilih video
+          </button>
+          <p className="mt-4 text-xs text-[#7b857c]">Video kekal dalam telefon anda</p>
         </div>
       ) : (
-        /* Video Selected - Minimal Row */
-        <div className="rounded-2xl border border-white/10 bg-zinc-900/60 p-3.5 backdrop-blur-md shadow-md flex items-center justify-between gap-3">
-          <div className="flex items-center space-x-3 min-w-0">
-            <div className="relative w-12 h-12 rounded-xl overflow-hidden bg-black flex-shrink-0 border border-white/10">
-              <video src={selectedVideo.previewUrl} className="w-full h-full object-cover" muted />
-              <div className="absolute inset-0 bg-black/30 flex items-center justify-center">
-                <Play className="w-3.5 h-3.5 text-white fill-white" />
-              </div>
-            </div>
+        <div className="overflow-hidden rounded-[26px] border border-[#e6ebe6] bg-white">
+          <div className="relative flex max-h-[52vh] min-h-56 justify-center bg-[#101411]">
+            <video
+              src={selectedVideo.previewUrl}
+              className="max-h-[52vh] w-full object-contain"
+              controls
+              playsInline
+              preload="metadata"
+            />
+            <button
+              type="button"
+              onClick={onClear}
+              disabled={disabled}
+              aria-label="Tukar video"
+              className="absolute right-3 top-3 flex h-9 w-9 items-center justify-center rounded-full bg-black/60 text-white transition hover:bg-black/80 disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-white"
+            >
+              <X className="h-4 w-4" />
+            </button>
+          </div>
+          <div className="flex items-center justify-between gap-3 px-4 py-3.5">
             <div className="min-w-0">
-              <p className="text-xs font-bold text-zinc-200 truncate">{selectedVideo.name}</p>
-              <p className="text-[11px] text-zinc-400 font-mono mt-0.5">
-                {Math.round(selectedVideo.durationSeconds)}s • {selectedVideo.sizeMb.toFixed(1)} MB
+              <p className="truncate text-sm font-semibold text-[#202720]">{selectedVideo.name}</p>
+              <p className="mt-1 text-xs text-[#6f7a70]">
+                {Math.round(selectedVideo.durationSeconds)}s · {selectedVideo.width}×{selectedVideo.height} · {selectedVideo.sizeMb.toFixed(1)} MB
               </p>
             </div>
-          </div>
-
-          {!disabled && (
             <button
-              onClick={onClear}
-              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-white/10 transition"
-              title="Tukar Video"
+              type="button"
+              onClick={openPicker}
+              disabled={disabled}
+              className="inline-flex min-h-10 flex-shrink-0 items-center gap-1.5 rounded-xl bg-[#f1f5f1] px-3 text-xs font-semibold text-[#344238] transition hover:bg-[#e7eee8] disabled:opacity-50 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
             >
-              <X className="w-4 h-4" />
+              <Play className="h-3.5 w-3.5" /> Tukar
             </button>
-          )}
+          </div>
         </div>
       )}
     </div>

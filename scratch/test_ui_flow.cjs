@@ -5,6 +5,7 @@ const os = require('node:os');
 const path = require('node:path');
 
 const appUrl = process.env.STATSDHD_TEST_URL || 'http://127.0.0.1:4173';
+const screenshotDir = process.env.STATUSHD_SCREENSHOT_DIR;
 const tempDir = fs.mkdtempSync(path.join(os.tmpdir(), 'statushd-smoke-'));
 const inputPath = path.join(tempDir, 'odd-dimensions.webm');
 const outputPath = path.join(tempDir, 'status-part.mp4');
@@ -47,8 +48,25 @@ function run(command, args) {
     const pageErrors = [];
     page.on('pageerror', (error) => pageErrors.push(error.message));
     await page.goto(appUrl, { waitUntil: 'networkidle' });
+    await page.getByRole('button', { name: /3 hari trial/i }).waitFor({ timeout: 5_000 });
+    await page.getByRole('button', { name: 'Pilih video', exact: true }).waitFor({ timeout: 5_000 });
+    if (screenshotDir) {
+      fs.mkdirSync(screenshotDir, { recursive: true });
+      await page.screenshot({ path: path.join(screenshotDir, 'statushd-mobile-home.png'), fullPage: true });
+      const desktopContext = await browser.newContext({ viewport: { width: 1440, height: 1000 } });
+      const desktopPage = await desktopContext.newPage();
+      await desktopPage.goto(appUrl, { waitUntil: 'networkidle' });
+      await desktopPage.screenshot({ path: path.join(screenshotDir, 'statushd-desktop-home.png'), fullPage: true });
+      await desktopContext.close();
+    }
+    await page.getByRole('button', { name: /3 hari trial/i }).click();
+    await page.getByRole('dialog').waitFor({ timeout: 5_000 });
+    await page.getByText('RM5', { exact: true }).waitFor({ timeout: 5_000 });
+    await page.getByRole('link', { name: /Minta cara bayaran DuitNow/ }).waitFor({ timeout: 5_000 });
+    if (screenshotDir) await page.screenshot({ path: path.join(screenshotDir, 'statushd-mobile-paywall.png'), fullPage: true });
+    await page.getByRole('button', { name: 'Tutup' }).click();
     await page.locator('input[type="file"]').setInputFiles(inputPath);
-    await page.getByRole('button', { name: 'Tukar ke Status HD' }).click();
+    await page.getByRole('button', { name: 'Sediakan untuk WhatsApp' }).click();
     await page.getByText(/Klip Siap/).waitFor({ timeout: 180_000 });
 
     const downloadPromise = page.waitForEvent('download', { timeout: 15_000 });

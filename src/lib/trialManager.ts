@@ -1,4 +1,4 @@
-const TRIAL_DAYS = 7;
+const TRIAL_DAYS = 3;
 const STORAGE_KEY_START = 'status_hd_trial_start';
 const STORAGE_KEY_EXPIRED = 'status_hd_trial_expired';
 const STORAGE_KEY_VIP = 'status_hd_vip_token';

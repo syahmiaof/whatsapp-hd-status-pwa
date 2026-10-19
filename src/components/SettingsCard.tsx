@@ -17,31 +17,31 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
   const [isOpen, setIsOpen] = useState(false);
 
   return (
-    <div className="rounded-2xl border border-white/5 bg-zinc-900/40 p-3 backdrop-blur-md">
+    <div className="rounded-2xl border border-[#e6ebe6] bg-white p-3">
       <button
         type="button"
         disabled={disabled}
         onClick={() => setIsOpen(!isOpen)}
-        className="w-full flex items-center justify-between text-xs text-zinc-400 hover:text-zinc-200 transition py-0.5"
+        className="flex w-full items-center justify-between py-1 text-xs text-[#566258] transition hover:text-[#1d2c20] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-emerald-300"
       >
         <span className="flex items-center gap-1.5 font-medium">
-          <Sliders className="w-3.5 h-3.5 text-emerald-400" />
+          <Sliders className="h-3.5 w-3.5 text-[#168347]" />
           Pilihan Lanjutan ({settings.quality}, {settings.autoSplit30s ? 'Auto-Split 30s' : 'Penuh'})
         </span>
         {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
       </button>
 
       {isOpen && (
-        <div className="pt-3 mt-2 border-t border-white/5 space-y-3 animate-fade-in text-xs">
+        <div className="mt-2 space-y-3 border-t border-[#edf0ed] pt-3 text-xs animate-fade-in">
           {/* Auto-Split Toggle */}
           <div className="flex items-center justify-between">
-            <span className="text-zinc-300 font-medium">Potong automatik 30 saat</span>
+            <span className="font-medium text-[#344238]">Potong automatik 30 saat</span>
             <button
               type="button"
               disabled={disabled}
               onClick={() => onChange({ ...settings, autoSplit30s: !settings.autoSplit30s })}
               className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-                settings.autoSplit30s ? 'bg-emerald-500' : 'bg-zinc-700'
+                settings.autoSplit30s ? 'bg-[#168347]' : 'bg-[#c9d0ca]'
               }`}
             >
               <span
@@ -54,13 +54,13 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
 
           {/* Quality */}
           <div className="flex items-center justify-between">
-            <span className="text-zinc-300 font-medium">Kualiti Output</span>
-            <div className="flex bg-zinc-800 p-0.5 rounded-lg border border-white/10">
+            <span className="font-medium text-[#344238]">Kualiti output</span>
+            <div className="flex rounded-lg border border-[#e6ebe6] bg-[#f4f6f4] p-0.5">
               <button
                 type="button"
                 onClick={() => onChange({ ...settings, quality: '1080p' })}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
-                  settings.quality === '1080p' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+                  settings.quality === '1080p' ? 'bg-white text-[#176b3b] shadow-sm' : 'text-[#68746a] hover:text-[#263429]'
                 }`}
               >
                 1080p
@@ -69,7 +69,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
                 type="button"
                 onClick={() => onChange({ ...settings, quality: '720p' })}
                 className={`px-2.5 py-1 rounded-md text-[11px] font-bold transition ${
-                  settings.quality === '720p' ? 'bg-emerald-500 text-black' : 'text-zinc-400 hover:text-white'
+                  settings.quality === '720p' ? 'bg-white text-[#176b3b] shadow-sm' : 'text-[#68746a] hover:text-[#263429]'
                 }`}
               >
                 720p
@@ -79,13 +79,13 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
 
           {/* Mute Audio */}
           <div className="flex items-center justify-between">
-            <span className="text-zinc-300 font-medium">Padam Audio (Mute)</span>
+            <span className="font-medium text-[#344238]">Senyapkan audio</span>
             <button
               type="button"
               disabled={disabled}
               onClick={() => onChange({ ...settings, muteAudio: !settings.muteAudio })}
               className={`relative inline-flex h-5 w-9 flex-shrink-0 cursor-pointer rounded-full transition-colors ${
-                settings.muteAudio ? 'bg-emerald-500' : 'bg-zinc-700'
+                settings.muteAudio ? 'bg-[#168347]' : 'bg-[#c9d0ca]'
               }`}
             >
               <span
