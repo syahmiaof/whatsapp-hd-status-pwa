@@ -27,7 +27,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onA
   };
 
   const whatsappLink = `https://wa.me/601123456789?text=${encodeURIComponent(
-    `Hai Admin StatusHD, saya nak langgan VIP RM9/bulan.\nKod Peranti: ${referenceCode}\n(Saya lampirkan resit DuitNow)`
+    `Hai Admin StatusHD, saya nak langgan VIP RM5/bulan (Pakej Jimat).\nKod Peranti: ${referenceCode}\n(Saya lampirkan resit DuitNow)`
   )}`;
 
   return (
@@ -45,16 +45,16 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onA
         <div className="text-center space-y-1.5 pt-2">
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-bold">
             <QrCode className="w-3.5 h-3.5" />
-            <span>Pakej Rakan Sekelas</span>
+            <span>Pakej Kuantiti Jimat</span>
           </div>
           <h2 className="text-2xl font-black text-zinc-100 tracking-tight">
             StatusHD VIP
           </h2>
           <div className="flex items-baseline justify-center gap-1.5">
-            <span className="text-4xl font-black text-emerald-400">RM9</span>
+            <span className="text-4xl font-black text-emerald-400">RM5</span>
             <span className="text-xs text-zinc-400 font-semibold">/ sebulan</span>
           </div>
-          <p className="text-xs text-zinc-400">Jauh lebih murah daripada PureStatus (RM49/thn)!</p>
+          <p className="text-xs text-zinc-400">Harga secawan teh ais! Jauh lebih murah daripada PureStatus (RM49/thn)</p>
         </div>
 
         {/* Kelebihan */}

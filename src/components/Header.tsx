@@ -42,7 +42,7 @@ export const Header: React.FC<HeaderProps> = ({ trialDaysLeft, isSubscribed, onO
               className="flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-gradient-to-r from-amber-500/10 to-orange-500/10 hover:from-amber-500/20 hover:to-orange-500/20 border border-amber-500/30 text-amber-300 text-xs font-semibold transition active:scale-95 shadow-sm"
             >
               <Zap className="w-3.5 h-3.5 text-amber-400 fill-amber-400" />
-              <span>{trialDaysLeft > 0 ? `${trialDaysLeft} Hari Trial` : 'Unlock RM9'}</span>
+              <span>{trialDaysLeft > 0 ? `${trialDaysLeft} Hari Trial` : 'Unlock RM5'}</span>
             </button>
           )}
         </div>
