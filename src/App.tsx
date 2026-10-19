@@ -13,7 +13,7 @@ import {
 } from './types/optimizer';
 import { transcodeAndSplitVideo, terminateFFmpeg } from './lib/ffmpegEngine';
 import { initTrial, activateVipKey } from './lib/trialManager';
-import { Zap, AlertTriangle } from 'lucide-react';
+import { Zap, AlertTriangle, Sparkles } from 'lucide-react';
 
 export const App: React.FC = () => {
   const [video, setVideo] = useState<VideoMetadata | null>(null);
@@ -231,6 +231,22 @@ export const App: React.FC = () => {
           <div className="p-3 rounded-2xl bg-rose-500/10 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
             <AlertTriangle className="w-4 h-4 flex-shrink-0 text-rose-400" />
             <p>{errorMessage}</p>
+          </div>
+        )}
+
+        {/* Hero Section Ringkas */}
+        {!video && stage === 'idle' && (
+          <div className="text-center space-y-2 pt-2 pb-1 animate-fade-in">
+            <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
+              <Sparkles className="w-3.5 h-3.5" />
+              <span>Anti-Blur & Auto 30s</span>
+            </div>
+            <h2 className="text-xl font-extrabold text-zinc-100 tracking-tight">
+              Video Status Kekal Cantik, Tak Pecah.
+            </h2>
+            <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
+              Post ke WhatsApp masih jelas dalam HD. 100% diproses terus dalam telefon anda.
+            </p>
           </div>
         )}
 
