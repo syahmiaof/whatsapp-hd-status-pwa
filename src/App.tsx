@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { Header } from './components/Header';
 import { Dropzone } from './components/Dropzone';
 import { SettingsCard } from './components/SettingsCard';
@@ -11,7 +11,7 @@ import {
   ProcessingStage,
   TranscodeClipResult
 } from './types/optimizer';
-import { transcodeAndSplitVideo } from './lib/ffmpegEngine';
+import { transcodeAndSplitVideo, terminateFFmpeg } from './lib/ffmpegEngine';
 import { initTrial, activateVipKey } from './lib/trialManager';
 import { Zap, AlertTriangle } from 'lucide-react';
 
@@ -33,8 +33,41 @@ export const App: React.FC = () => {
   const [trialState, setTrialState] = useState(() => initTrial());
   const [isPaywallOpen, setIsPaywallOpen] = useState(false);
 
+  // Kawalan Pembatalan Transcode
+  const abortControllerRef = useRef<AbortController | null>(null);
+
+  // Helper pembersihan Object URL untuk mengelakkan kebocoran RAM
+  const releaseVideo = (v: VideoMetadata | null) => {
+    if (v?.previewUrl) {
+      try {
+        URL.revokeObjectURL(v.previewUrl);
+      } catch {
+        // Abaikan
+      }
+    }
+  };
+
+  const releaseClips = (clipList: TranscodeClipResult[]) => {
+    clipList.forEach((clip) => {
+      if (clip.downloadUrl) {
+        try {
+          URL.revokeObjectURL(clip.downloadUrl);
+        } catch {
+          // Abaikan
+        }
+      }
+    });
+  };
+
   useEffect(() => {
     setTrialState(initTrial());
+    return () => {
+      // Pembersihan semasa komponen dinyahpasang
+      if (abortControllerRef.current) {
+        abortControllerRef.current.abort();
+      }
+      terminateFFmpeg();
+    };
   }, []);
 
   // Anggaran masa baki berdasarkan progress
@@ -48,9 +81,22 @@ export const App: React.FC = () => {
 
   const handleSelectFile = (file: File) => {
     setErrorMessage(null);
+
+    // Bebaskan memori fail lama serta-merta
+    setVideo((prev) => {
+      releaseVideo(prev);
+      return null;
+    });
+    setClips((prev) => {
+      releaseClips(prev);
+      return [];
+    });
+
     const previewUrl = URL.createObjectURL(file);
     const videoEl = document.createElement('video');
+    videoEl.preload = 'metadata';
     videoEl.src = previewUrl;
+
     videoEl.onloadedmetadata = () => {
       setVideo({
         file,
@@ -59,9 +105,18 @@ export const App: React.FC = () => {
         durationSeconds: videoEl.duration || 30,
         previewUrl,
       });
-      setClips([]);
       setStage('idle');
       setProgress(0);
+    };
+
+    videoEl.onerror = () => {
+      try {
+        URL.revokeObjectURL(previewUrl);
+      } catch {
+        // Abaikan
+      }
+      setErrorMessage('Gagal membaca fail video. Format mungkin rosak atau tidak disokong oleh pelayar.');
+      setStage('idle');
     };
   };
 
@@ -78,6 +133,15 @@ export const App: React.FC = () => {
     setStage('loading-wasm');
     setProgress(5);
 
+    // Bebaskan klip lama sebelum proses baharu bermula
+    setClips((prev) => {
+      releaseClips(prev);
+      return [];
+    });
+
+    const controller = new AbortController();
+    abortControllerRef.current = controller;
+
     try {
       setStage('transcoding');
       const results = await transcodeAndSplitVideo(
@@ -85,18 +149,59 @@ export const App: React.FC = () => {
         settings,
         (currentProgress) => {
           setProgress(currentProgress);
-        }
+        },
+        controller.signal,
+        video.durationSeconds
       );
 
       setClips(results);
       setStage('completed');
     } catch (err: any) {
-      console.error(err);
+      if (controller.signal.aborted || err?.name === 'AbortError') {
+        // Pembatalan mesra oleh pengguna - kembali ke sedia tanpa banner ralat
+        setStage('idle');
+        setProgress(0);
+        setEtaSeconds(null);
+        return;
+      }
+      console.error('Ralat pemprosesan video:', err);
       setStage('error');
       setErrorMessage(
-        err?.message || 'Ralat berlaku semasa pemprosesan video. Sila cuba video yang lebih pendek atau preset 720p.'
+        err?.message || 'Ralat berlaku semasa pemprosesan video. Sila cuba kualiti 720p atau video yang lebih ringkas.'
       );
+    } finally {
+      abortControllerRef.current = null;
     }
+  };
+
+  const handleCancelTranscoding = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    terminateFFmpeg();
+    setStage('idle');
+    setProgress(0);
+    setEtaSeconds(null);
+  };
+
+  const handleReset = () => {
+    if (abortControllerRef.current) {
+      abortControllerRef.current.abort();
+      abortControllerRef.current = null;
+    }
+    setVideo((prev) => {
+      releaseVideo(prev);
+      return null;
+    });
+    setClips((prev) => {
+      releaseClips(prev);
+      return [];
+    });
+    setStage('idle');
+    setProgress(0);
+    setEtaSeconds(null);
+    setErrorMessage(null);
   };
 
   const handleDownloadAll = () => {
@@ -133,11 +238,7 @@ export const App: React.FC = () => {
         <Dropzone
           selectedVideo={video}
           onSelectFile={handleSelectFile}
-          onClear={() => {
-            setVideo(null);
-            setClips([]);
-            setStage('idle');
-          }}
+          onClear={handleReset}
           disabled={stage === 'transcoding' || stage === 'loading-wasm'}
         />
 
@@ -169,7 +270,7 @@ export const App: React.FC = () => {
             secondsRemaining={etaSeconds}
             currentClipIndex={1}
             totalClips={settings.autoSplit30s && video ? Math.max(1, Math.ceil(video.durationSeconds / 30)) : 1}
-            onCancel={() => setStage('idle')}
+            onCancel={handleCancelTranscoding}
           />
         )}
 
@@ -184,11 +285,7 @@ export const App: React.FC = () => {
               a.click();
             }}
             onDownloadAll={handleDownloadAll}
-            onReset={() => {
-              setVideo(null);
-              setClips([]);
-              setStage('idle');
-            }}
+            onReset={handleReset}
           />
         )}
       </main>

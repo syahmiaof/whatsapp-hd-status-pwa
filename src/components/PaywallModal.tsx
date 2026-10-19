@@ -113,7 +113,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onA
           <div className="flex gap-2">
             <input
               type="text"
-              placeholder="Contoh: VIP-8842 atau BOSSKITA"
+              placeholder="Contoh: HD-A8F2K9M1-C4E2 atau BOSSKITA"
               value={activationKey}
               onChange={(e) => {
                 setActivationKey(e.target.value);

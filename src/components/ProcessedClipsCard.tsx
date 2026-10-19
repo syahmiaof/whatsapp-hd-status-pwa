@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TranscodeClipResult } from '../types/optimizer';
-import { Download, Share2, Sparkles, RefreshCw, Film } from 'lucide-react';
+import { Download, Share2, Sparkles, RefreshCw, Film, Info } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ProcessedClipsCardProps {
@@ -17,6 +17,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
   onReset,
 }) => {
   const [sharingIndex, setSharingIndex] = useState<number | null>(null);
+  const [shareNotice, setShareNotice] = useState<string | null>(null);
 
   // Trigger celebration confetti upon mount
   React.useEffect(() => {
@@ -30,28 +31,46 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
 
   const handleShareToWhatsApp = async (clip: TranscodeClipResult) => {
     setSharingIndex(clip.index);
+    setShareNotice(null);
+
     try {
       const file = new File([clip.blob], clip.filename, { type: 'video/mp4' });
-      if (navigator.canShare && navigator.canShare({ files: [file] })) {
-        await navigator.share({
-          files: [file],
-          title: `WhatsApp HD Status (${clip.filename})`,
-          text: 'Status HD siap dipotong!',
-        });
-      } else {
-        // Fallback muat turun automatik
-        onDownloadClip(clip);
-        window.location.href = 'whatsapp://send';
+
+      // Semak jika pelayar menyokong Web Share API untuk fail
+      if (typeof navigator.share === 'function' && navigator.canShare && navigator.canShare({ files: [file] })) {
+        try {
+          await navigator.share({
+            files: [file],
+            title: `WhatsApp HD Status (${clip.filename})`,
+            text: 'Status HD siap dipotong!',
+          });
+          return;
+        } catch (shareErr: any) {
+          // Jika pengguna tutup share sheet sendiri, tiada fallback diperlukan
+          if (shareErr instanceof DOMException && shareErr.name === 'AbortError') {
+            return;
+          }
+          // OS reject perkongsian langsung, fallback ke muat turun
+          onDownloadClip(clip);
+          setShareNotice('Telefon menolak perkongsian terus. Fail dimuat turun sebagai fallback.');
+          return;
+        }
       }
+
+      // Fallback untuk desktop / pelayar tanpa sokongan share fail
+      onDownloadClip(clip);
+      setShareNotice('Fail dimuat turun. Buka WhatsApp dan pilih klip ini secara manual.');
     } catch (err) {
-      console.log('Share canceled or not supported:', err);
+      console.warn('Ralat perkongsian:', err);
+      onDownloadClip(clip);
+      setShareNotice('Fail dimuat turun ke peranti anda.');
     } finally {
       setSharingIndex(null);
     }
   };
 
   return (
-    <div className="rounded-3xl border border-emerald-500/25 bg-zinc-900/80 p-5 space-y-4.5 backdrop-blur-md shadow-2xl">
+    <div className="rounded-3xl border border-emerald-500/25 bg-zinc-900/80 p-5 space-y-4 backdrop-blur-md shadow-2xl">
       {/* Banner Selesai */}
       <div className="flex items-center justify-between pb-3 border-b border-white/10">
         <div>
@@ -70,6 +89,22 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
           <RefreshCw className="w-3 h-3" /> Baru
         </button>
       </div>
+
+      {/* Makluman Share jika ada */}
+      {shareNotice && (
+        <div className="p-3 rounded-2xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-xs flex items-center justify-between gap-2 animate-fade-in">
+          <div className="flex items-center gap-2">
+            <Info className="w-4 h-4 flex-shrink-0 text-emerald-400" />
+            <p>{shareNotice}</p>
+          </div>
+          <button
+            onClick={() => setShareNotice(null)}
+            className="text-zinc-400 hover:text-zinc-200 font-bold px-1"
+          >
+            ✕
+          </button>
+        </div>
+      )}
 
       {/* Senarai Klip */}
       <div className="space-y-2.5 max-h-80 overflow-y-auto pr-1">

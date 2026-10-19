@@ -30,8 +30,23 @@ export default defineConfig({
         ]
       },
       workbox: {
-        maximumFileSizeToCacheInBytes: 40 * 1024 * 1024,
-        globPatterns: ['**/*.{js,css,html,ico,png,svg,wasm}']
+        globPatterns: ['**/*.{js,css,html,ico,png,svg}'],
+        runtimeCaching: [
+          {
+            urlPattern: /\/ffmpeg\/ffmpeg-core\.(?:wasm|js)$/,
+            handler: 'CacheFirst',
+            options: {
+              cacheName: 'ffmpeg-core-cache',
+              expiration: {
+                maxEntries: 10,
+                maxAgeSeconds: 60 * 60 * 24 * 30 // 30 hari
+              },
+              cacheableResponse: {
+                statuses: [0, 200]
+              }
+            }
+          }
+        ]
       }
     })
   ],
