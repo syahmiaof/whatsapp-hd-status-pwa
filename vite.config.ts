@@ -11,7 +11,7 @@ export default defineConfig({
       manifest: {
         name: 'StatusHD: WhatsApp Video Splitter',
         short_name: 'StatusHD',
-        description: 'Optimumkan dan potong video WhatsApp Status tanpa hilang kualiti HD',
+        description: 'Sediakan dan potong video untuk WhatsApp Status; pemprosesan dibuat dalam telefon',
         theme_color: '#09090b',
         background_color: '#09090b',
         display: 'standalone',

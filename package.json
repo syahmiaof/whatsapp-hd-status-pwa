@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
-    "preview": "vite preview"
+    "preview": "vite preview",
+    "test:smoke": "node scratch/test_ui_flow.cjs"
   },
   "dependencies": {
     "@ffmpeg/core": "^0.12.10",

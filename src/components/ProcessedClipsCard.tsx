@@ -1,6 +1,6 @@
 import React, { useState } from 'react';
 import { TranscodeClipResult } from '../types/optimizer';
-import { Download, Share2, Sparkles, RefreshCw, Film, Info, Check, ArrowRight } from 'lucide-react';
+import { Download, Share2, Sparkles, RefreshCw, Check } from 'lucide-react';
 import confetti from 'canvas-confetti';
 
 interface ProcessedClipsCardProps {
@@ -17,7 +17,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
   onReset,
 }) => {
   const [sharingIndex, setSharingIndex] = useState<number | null>(null);
-  const [sentClips, setSentClips] = useState<number[]>([]);
+  const [sharedClips, setSharedClips] = useState<number[]>([]);
   const [shareNotice, setShareNotice] = useState<string | null>(null);
   const [showForwardTip, setShowForwardTip] = useState(false);
 
@@ -42,27 +42,27 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
           await navigator.share({
             files: [file],
             title: `StatusHD (${clip.filename})`,
-            text: 'Status HD 1080p',
+            text: 'Video Status diproses oleh StatusHD',
           });
-          setSentClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
+          setSharedClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
+          setShareNotice('Share sheet ditutup. StatusHD tak boleh sahkan sama ada video sudah dihantar.');
           return;
         } catch (shareErr: any) {
           if (shareErr instanceof DOMException && shareErr.name === 'AbortError') {
             return;
           }
           onDownloadClip(clip);
-          setShareNotice('Fail disimpan ke galeri telefon.');
-          setSentClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
+          setShareNotice('Share tak tersedia. Fail dimuat turun; buka WhatsApp dan pilih fail ini dari Galeri.');
           return;
         }
       }
 
       onDownloadClip(clip);
-      setShareNotice('Fail disimpan ke telefon. Buka WhatsApp dan pilih klip ini.');
-      setSentClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
+      setShareNotice('Share fail tak disokong pada browser ini. Fail dimuat turun ke telefon.');
     } catch (err) {
       console.warn('Ralat share:', err);
       onDownloadClip(clip);
+      setShareNotice('Gagal membuka share sheet. Fail dimuat turun ke telefon.');
     } finally {
       setSharingIndex(null);
     }
@@ -84,25 +84,25 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
         </button>
       </div>
 
-      {/* Tip Penting (1 Ayat Sahaja) */}
+      {/* Cara hantar ke Status */}
       <div className="p-2.5 rounded-xl bg-amber-500/10 border border-amber-500/20 text-amber-200 text-xs flex items-center justify-between gap-2">
         <p className="text-[11px] leading-tight">
-          ⚠️ <strong>Jangan edit/trim dalam WhatsApp</strong> — terus tekan Send supaya kekal 1080p.
+          ℹ️ Share buka WhatsApp; pilih penerima atau Status jika tersedia. WhatsApp mungkin memampatkan video.
         </p>
         <button
           onClick={() => setShowForwardTip(!showForwardTip)}
           className="text-[10px] text-amber-400 font-bold underline whitespace-nowrap"
         >
-          {showForwardTip ? 'Tutup' : 'Trik Forward?'}
+          {showForwardTip ? 'Tutup' : 'Cara terbaik?'}
         </button>
       </div>
 
-      {/* Trik Rahsia Forwarding (Collapsible) */}
+      {/* Panduan WhatsApp yang jujur */}
       {showForwardTip && (
         <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/25 text-emerald-200 text-[11px] space-y-1 animate-fade-in leading-relaxed">
-          <p className="font-bold text-emerald-300">💡 Rahsia WhatsApp Tak Compress Langsung:</p>
+          <p className="font-bold text-emerald-300">Cara hantar dengan kawalan kualiti terbaik:</p>
           <p>
-            Hantar video ini ke chat sendiri (Message Yourself) atau kawan. Dari chat itu, tekan butang <strong>Forward (➡️) ke My Status</strong>. WhatsApp tidak pernah memampatkan video yang diforward!
+            Jika share terus ke Status tak muncul: simpan fail, buka WhatsApp dan lampirkan dari Galeri. Pilih HD jika pilihan itu muncul. WhatsApp masih boleh memproses video semasa post; hasil akhir bergantung pada WhatsApp dan rangkaian.
           </p>
         </div>
       )}
@@ -118,13 +118,13 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
       {/* Senarai Klip (Clean & Simple) */}
       <div className="space-y-2 max-h-72 overflow-y-auto pr-0.5">
         {clips.map((clip) => {
-          const isSent = sentClips.includes(clip.index);
+          const isShared = sharedClips.includes(clip.index);
 
           return (
             <div
               key={clip.index}
               className={`p-3 rounded-2xl border transition flex items-center justify-between gap-2.5 ${
-                isSent
+                isShared
                   ? 'bg-zinc-950/40 border-emerald-500/20 opacity-75'
                   : 'bg-zinc-950/70 border-white/5 hover:border-white/10'
               }`}
@@ -132,9 +132,9 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
               {/* Info Klip */}
               <div className="flex items-center space-x-2.5 min-w-0">
                 <div className={`w-8 h-8 rounded-lg flex items-center justify-center font-bold text-xs flex-shrink-0 ${
-                  isSent ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-300'
+                  isShared ? 'bg-emerald-500/20 text-emerald-400' : 'bg-zinc-800 text-zinc-300'
                 }`}>
-                  {isSent ? <Check className="w-4 h-4 stroke-[3]" /> : clip.index}
+                  {isShared ? <Check className="w-4 h-4 stroke-[3]" /> : clip.index}
                 </div>
                 <div className="min-w-0">
                   <p className="text-xs font-bold text-zinc-200 truncate">
@@ -152,13 +152,13 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
                   onClick={() => handleShareToWhatsApp(clip)}
                   disabled={sharingIndex === clip.index}
                   className={`py-2 px-3.5 rounded-xl text-xs font-bold flex items-center gap-1.5 transition active:scale-95 shadow-sm ${
-                    isSent
+                    isShared
                       ? 'bg-zinc-800 text-zinc-300 hover:text-white'
                       : 'bg-[#25D366] hover:bg-[#20ba59] text-zinc-950 font-black'
                   }`}
                 >
                   <Share2 className="w-3.5 h-3.5" />
-                  <span>{isSent ? 'Hantar Lagi' : 'WhatsApp'}</span>
+                  <span>{isShared ? 'Buka Lagi' : 'WhatsApp'}</span>
                 </button>
 
                 <button

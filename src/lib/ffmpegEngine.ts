@@ -121,7 +121,11 @@ export async function transcodeAndSplitVideo(
       '-vf', videoFilter,
       '-c:v', 'libx264',
       '-crf', crf,
-      '-preset', 'ultrafast',
+      // `ultrafast` skips many encoder tools and creates much larger files for
+      // the same CRF. `fast` is a better quality/size tradeoff for a phone PWA.
+      '-preset', 'fast',
+      '-profile:v', 'high',
+      '-level:v', '4.0',
       '-pix_fmt', 'yuv420p',
       '-sc_threshold', '0',
       '-force_key_frames', 'expr:gte(t,n_forced*30)',
@@ -132,7 +136,7 @@ export async function transcodeAndSplitVideo(
     if (settings.muteAudio) {
       baseArgs.push('-an');
     } else {
-      baseArgs.push('-c:a', 'aac', '-b:a', '128k', '-ar', '44100');
+      baseArgs.push('-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-ac', '2');
     }
 
     const results: TranscodeClipResult[] = [];

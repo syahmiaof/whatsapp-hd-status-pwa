@@ -82,6 +82,11 @@ export const App: React.FC = () => {
   const handleSelectFile = (file: File) => {
     setErrorMessage(null);
 
+    if (!file.type.startsWith('video/')) {
+      setErrorMessage('Pilih fail video yang disokong seperti MP4 atau MOV.');
+      return;
+    }
+
     // Bebaskan memori fail lama serta-merta
     setVideo((prev) => {
       releaseVideo(prev);
@@ -98,12 +103,20 @@ export const App: React.FC = () => {
     videoEl.src = previewUrl;
 
     videoEl.onloadedmetadata = () => {
+      if (!Number.isFinite(videoEl.duration) || videoEl.videoWidth <= 0 || videoEl.videoHeight <= 0) {
+        URL.revokeObjectURL(previewUrl);
+        setErrorMessage('Metadata video tak dapat dibaca. Cuba eksport semula video sebagai MP4 atau MOV.');
+        setStage('idle');
+        return;
+      }
       setVideo({
         file,
         name: file.name,
         sizeMb: file.size / (1024 * 1024),
         durationSeconds: videoEl.duration || 30,
         previewUrl,
+        width: videoEl.videoWidth,
+        height: videoEl.videoHeight,
       });
       setStage('idle');
       setProgress(0);
@@ -239,13 +252,13 @@ export const App: React.FC = () => {
           <div className="text-center space-y-2 pt-2 pb-1 animate-fade-in">
             <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold">
               <Sparkles className="w-3.5 h-3.5" />
-              <span>Anti-Blur & Auto 30s</span>
+              <span>Siap untuk WhatsApp • Auto 30s</span>
             </div>
             <h2 className="text-xl font-extrabold text-zinc-100 tracking-tight">
-              Video Status Kekal Cantik, Tak Pecah.
+              Sediakan video untuk WhatsApp Status.
             </h2>
             <p className="text-xs text-zinc-400 max-w-xs mx-auto leading-relaxed">
-              Post ke WhatsApp masih jelas dalam HD. 100% diproses terus dalam telefon anda.
+              Pilih 720p atau 1080p; video diproses dalam telefon. WhatsApp mungkin memampatkannya semasa dimuat naik.
             </p>
           </div>
         )}

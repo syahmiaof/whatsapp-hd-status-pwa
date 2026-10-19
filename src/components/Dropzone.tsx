@@ -65,7 +65,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ selectedVideo, onSelectFile,
               Pilih Video
             </p>
             <p className="text-xs text-zinc-400">
-              Auto potong 30s • 1080p Ultra HD
+              Auto potong 30s • sehingga 1080p
             </p>
           </div>
         </div>

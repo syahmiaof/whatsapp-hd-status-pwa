@@ -63,7 +63,7 @@ export const PaywallModal: React.FC<PaywallModalProps> = ({ isOpen, onClose, onA
             <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
               <Check className="w-3 h-3 stroke-[3]" />
             </span>
-            Kualiti Ultra HD 1080p tanpa pecah
+            Output sehingga 1080p, diproses terus dalam telefon
           </div>
           <div className="flex items-center gap-2">
             <span className="w-4 h-4 rounded-full bg-emerald-500/20 text-emerald-400 flex items-center justify-center font-bold">
