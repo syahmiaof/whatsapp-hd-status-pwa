@@ -40,11 +40,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
 
       if (typeof navigator.share === 'function' && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
-          await navigator.share({
-            files: [file],
-            title: `StatusHD (${clip.filename})`,
-            text: 'Video Status diproses oleh StatusHD',
-          });
+          await navigator.share({ files: [file] });
           setSharedClips((prev) => (prev.includes(clip.index) ? prev : [...prev, clip.index]));
           setShareNotice('Share sheet ditutup. StatusHD tak boleh sahkan sama ada video sudah dihantar.');
           return;
