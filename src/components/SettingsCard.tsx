@@ -26,13 +26,16 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
       >
         <span className="flex items-center gap-1.5 font-medium">
           <Sliders className="h-3.5 w-3.5 text-[#168347]" />
-          Pilihan Lanjutan ({settings.quality}, {settings.autoSplit30s ? 'Auto-Split 30s' : 'Penuh'})
+          Tetapan video ({settings.quality}, {settings.autoSplit30s ? 'Auto-Split 30s' : 'Penuh'})
         </span>
         {isOpen ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
       </button>
 
       {isOpen && (
         <div className="mt-2 space-y-3 border-t border-[#edf0ed] pt-3 text-xs animate-fade-in">
+          <p className="text-[11px] leading-relaxed text-[#68746a]">
+            Video akan dikod semula sebagai MP4 H.264. Resolusi ialah had maksimum; video kecil tidak dibesarkan.
+          </p>
           {/* Auto-Split Toggle */}
           <div className="flex items-center justify-between">
             <span className="font-medium text-[#344238]">Potong automatik 30 saat</span>
@@ -54,7 +57,7 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
 
           {/* Quality */}
           <div className="flex items-center justify-between">
-            <span className="font-medium text-[#344238]">Kualiti output</span>
+            <span className="font-medium text-[#344238]">Resolusi maksimum</span>
             <div className="flex rounded-lg border border-[#e6ebe6] bg-[#f4f6f4] p-0.5">
               <button
                 type="button"
@@ -100,3 +103,4 @@ export const SettingsCard: React.FC<SettingsCardProps> = ({
     </div>
   );
 };
+

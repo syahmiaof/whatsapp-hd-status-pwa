@@ -10,7 +10,7 @@ import {
   ProcessingStage,
   TranscodeClipResult
 } from './types/optimizer';
-import { transcodeAndSplitVideo, terminateFFmpeg } from './lib/ffmpegEngine';
+import { getFFmpeg, transcodeAndSplitVideo, terminateFFmpeg } from './lib/ffmpegEngine';
 import { Zap, AlertTriangle } from 'lucide-react';
 
 export const App: React.FC = () => {
@@ -127,7 +127,7 @@ export const App: React.FC = () => {
   };
 
   const handleStartTranscoding = async () => {
-    if (!video) return;
+    if (!video || abortControllerRef.current) return;
 
     setErrorMessage(null);
     setStage('loading-wasm');
@@ -143,6 +143,9 @@ export const App: React.FC = () => {
     abortControllerRef.current = controller;
 
     try {
+      await getFFmpeg(undefined, controller.signal);
+      if (controller.signal.aborted) return;
+
       setStage('transcoding');
       const results = await transcodeAndSplitVideo(
         video.file,
@@ -248,7 +251,7 @@ export const App: React.FC = () => {
               className="flex min-h-[52px] w-full items-center justify-center gap-2 rounded-2xl bg-[#138c4b] py-3.5 text-sm font-bold text-white shadow-[0_6px_16px_rgba(19,140,75,0.18)] transition hover:bg-[#0e773f] active:scale-[0.99] focus-visible:outline-none focus-visible:ring-4 focus-visible:ring-emerald-200"
             >
               <Zap className="h-4 w-4" />
-              <span>Sediakan untuk WhatsApp</span>
+              <span>Sediakan video untuk WhatsApp</span>
             </button>
 
             <SettingsCard
@@ -296,3 +299,4 @@ export const App: React.FC = () => {
     </div>
   );
 };
+

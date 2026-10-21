@@ -86,7 +86,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
         <div className="flex min-w-0 items-start gap-1.5">
           <Info className="mt-0.5 h-3.5 w-3.5 flex-shrink-0 text-[#657067]" />
           <p className="text-[11px] leading-snug">
-            Preview dulu. Kalau dah kabur di sini, masalah pada fail output. Kalau tajam, WhatsApp mungkin encode semula masa dihantar sebagai video.
+            StatusHD sudah encode output MP4 H.264. Untuk uji laluan WhatsApp yang berpotensi lebih jelas: simpan video, hantar ke chat sebagai HD, kemudian forward mesej itu ke My Status tanpa edit.
           </p>
         </div>
         <button
@@ -102,7 +102,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
         <div className="animate-fade-in space-y-1 rounded-xl border border-[#dfe9e1] bg-[#f1f8f2] p-3 text-[11px] leading-relaxed text-[#3d5142]">
             <p className="font-bold text-[#176b3b]">Semak kualiti:</p>
           <p>
-            Bandingkan video di preview ini dengan video selepas dihantar. WhatsApp boleh memampatkan media; StatusHD tak dapat kawal pemprosesan WhatsApp. Share sheet juga mungkin minta kau pilih WhatsApp secara manual.
+            Cara uji: simpan output ke telefon → hantar dari Gallery ke chat WhatsApp dan pilih HD jika pilihan itu muncul → pada mesej yang sudah dihantar, tekan Forward → My Status. Jangan trim atau edit di WhatsApp. WhatsApp masih boleh encode semula; StatusHD tak boleh jamin hasil Status.
           </p>
         </div>
       )}
@@ -142,9 +142,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
                   <p className="font-mono text-[10px] tabular-nums text-[#768078]">
                     {Math.round(clip.duration)}s • {clip.sizeMb.toFixed(1)} MB
                   </p>
-                  {clip.preservedOriginal && (
-                    <p className="text-[10px] font-semibold text-[#168347]">Fail asal dikekalkan</p>
-                  )}
+                  <p className="text-[10px] font-semibold text-[#168347]">MP4 H.264 · siap diproses</p>
                 </div>
                 </div>
 
@@ -210,3 +208,4 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
     </div>
   );
 };
+

@@ -15,15 +15,27 @@ export function terminateFFmpeg(): void {
   }
 }
 
-export async function getFFmpeg(onLog?: (msg: string) => void): Promise<FFmpeg> {
+export async function getFFmpeg(onLog?: (msg: string) => void, signal?: AbortSignal): Promise<FFmpeg> {
+  if (signal?.aborted) {
+    throw new DOMException('Proses transcoding telah dibatalkan', 'AbortError');
+  }
+
   if (ffmpegInstance && ffmpegInstance.loaded) {
     return ffmpegInstance;
   }
 
   const ffmpeg = new FFmpeg();
+  // Expose the instance before loading so the UI can terminate its worker if
+  // the user cancels while the core/WASM files are still being fetched.
+  ffmpegInstance = ffmpeg;
   if (onLog) {
     ffmpeg.on('log', ({ message }) => onLog(message));
   }
+
+  const abortHandler = () => {
+    if (ffmpegInstance === ffmpeg) terminateFFmpeg();
+  };
+  signal?.addEventListener('abort', abortHandler, { once: true });
 
   try {
     // 1. Muat turun fail daripada direktori tempatan (public/ffmpeg)
@@ -31,6 +43,9 @@ export async function getFFmpeg(onLog?: (msg: string) => void): Promise<FFmpeg> 
     const wasmURL = new URL('/ffmpeg/ffmpeg-core.wasm', window.location.href).href;
     await ffmpeg.load({ coreURL, wasmURL });
   } catch (err) {
+    if (signal?.aborted) {
+      throw new DOMException('Proses transcoding telah dibatalkan', 'AbortError');
+    }
     console.warn('Gagal memuat turun fail tempatan, mencuba fallback CDN...', err);
     // 2. Fallback ke CDN rasmi unpkg
     const baseURL = 'https://unpkg.com/@ffmpeg/core@0.12.10/dist/umd';
@@ -38,9 +53,15 @@ export async function getFFmpeg(onLog?: (msg: string) => void): Promise<FFmpeg> 
       coreURL: await toBlobURL(`${baseURL}/ffmpeg-core.js`, 'text/javascript'),
       wasmURL: await toBlobURL(`${baseURL}/ffmpeg-core.wasm`, 'application/wasm'),
     });
+  } finally {
+    signal?.removeEventListener('abort', abortHandler);
   }
 
-  ffmpegInstance = ffmpeg;
+  if (signal?.aborted || !ffmpeg.loaded) {
+    if (ffmpegInstance === ffmpeg) terminateFFmpeg();
+    throw new DOMException('Proses transcoding telah dibatalkan', 'AbortError');
+  }
+
   return ffmpeg;
 }
 
@@ -58,29 +79,11 @@ export async function transcodeAndSplitVideo(
   }
 
   const duration = sourceDuration && Number.isFinite(sourceDuration) ? sourceDuration : 0;
-
-  // For short clips, do not create an unnecessary lossy generation. WhatsApp
-  // will process the upload anyway; preserving the source gives it the best
-  // available input and avoids downloading/starting the 32 MB WASM engine.
-  if (duration > 0 && duration <= 30 && !settings.muteAudio) {
-    const extension = file.name.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() || 'mp4';
-    const blob = file.slice(0, file.size, file.type || mimeTypeForExtension(extension));
-    const downloadUrl = URL.createObjectURL(blob);
-    onProgress(100);
-    return [{
-      index: 1,
-      blob,
-      downloadUrl,
-      filename: `StatusHD_Original.${extension}`,
-      startTime: 0,
-      endTime: duration,
-      duration,
-      sizeMb: blob.size / (1024 * 1024),
-      preservedOriginal: true,
-    }];
+  const ffmpeg = await getFFmpeg(undefined, signal);
+  if (signal?.aborted) {
+    terminateFFmpeg();
+    throw new DOMException('Proses transcoding telah dibatalkan', 'AbortError');
   }
-
-  const ffmpeg = await getFFmpeg();
 
   // Pantau pembatalan luar jangka
   const abortHandler = () => {
@@ -96,7 +99,7 @@ export async function transcodeAndSplitVideo(
 
   ffmpeg.on('progress', progressHandler);
 
-  const inputExt = file.name.split('.').pop() || 'mp4';
+  const inputExt = file.name.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() || 'mp4';
   const uniqueId = Date.now();
   const outputPrefix = `status_clip_${uniqueId}`;
   const inputDir = '/input';
@@ -105,6 +108,7 @@ export async function transcodeAndSplitVideo(
 
   let isMounted = false;
   let activeInputPath = inputMountedPath;
+  const results: TranscodeClipResult[] = [];
 
   try {
     onProgress(5);
@@ -129,8 +133,8 @@ export async function transcodeAndSplitVideo(
       await ffmpeg.writeFile(fallbackInputName, fileData);
     }
 
-    // 2. Preserve orientation/aspect ratio and never upscale. Use Lanczos only
-    // when a fallback transcode is required; no padding or forced frame rate.
+    // Preserve orientation/aspect ratio and never upscale. The chosen preset
+    // is applied to every clip, including short clips under 30 seconds.
     const presetMax = settings.quality === '1080p' ? 1080 : 720;
     const width = sourceWidth || 0;
     const height = sourceHeight || 0;
@@ -159,68 +163,32 @@ export async function transcodeAndSplitVideo(
       '-pix_fmt', 'yuv420p',
       '-sc_threshold', '0',
       '-force_key_frames', 'expr:gte(t,n_forced*30)',
-      '-g', '60',
+      '-g', '120',
     ];
 
     if (!settings.muteAudio) {
       baseArgs.push('-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-ac', '2');
     }
 
-    const results: TranscodeClipResult[] = [];
-
     if (settings.autoSplit30s) {
-      // First attempt packet-copy segmentation. This keeps the compressed
-      // video/audio bitstreams untouched. Boundaries land on source keyframes,
-      // so a part can differ slightly from exactly 30 seconds.
-      const copyArgs = [
-        '-i', activeInputPath,
-        '-map', '0:v:0',
-        ...(settings.muteAudio ? ['-an'] : ['-map', '0:a:0?']),
-        '-sn', '-dn',
-        '-c', 'copy',
+      // Encode every output so the selected WhatsApp profile is actually
+      // applied. Force a keyframe at each cut to keep segments close to 30 s.
+      const exitCode = await ffmpeg.exec([
+        ...baseArgs,
         '-f', 'segment',
         '-segment_time', '30',
         '-segment_time_delta', '0.05',
         '-reset_timestamps', '1',
         '-segment_format_options', 'movflags=+faststart',
         `${outputPrefix}_%03d.mp4`
-      ];
-
-      let exitCode = -1;
-      try {
-        exitCode = await ffmpeg.exec(copyArgs, undefined, { signal });
-      } catch (copyError) {
-        if (signal?.aborted) throw copyError;
-        console.warn('Stream-copy segmentation gagal; cuba encode untuk keserasian.', copyError);
+      ], undefined, { signal });
+      if (exitCode !== 0) {
+        throw new Error(`FFmpeg gagal semasa pembahagian video (Kod ralat: ${exitCode})`);
       }
-      let generatedFiles = (await ffmpeg.listDir('/')).filter(
+
+      const generatedFiles = (await ffmpeg.listDir('/')).filter(
         (entry) => !entry.isDir && entry.name.startsWith(outputPrefix) && entry.name.endsWith('.mp4')
       );
-
-      // Some codecs/containers cannot be copied into MP4. Remove partial files
-      // and fall back to a compatibility encode only in that case.
-      if (exitCode !== 0 || generatedFiles.length === 0) {
-        for (const entry of generatedFiles) await ffmpeg.deleteFile(entry.name).catch(() => undefined);
-        try {
-          exitCode = await ffmpeg.exec([
-            ...baseArgs,
-            '-f', 'segment',
-            '-segment_time', '30',
-            '-reset_timestamps', '1',
-            '-segment_format_options', 'movflags=+faststart',
-            `${outputPrefix}_%03d.mp4`
-          ], undefined, { signal });
-        } catch (fallbackError) {
-          if (signal?.aborted) throw fallbackError;
-          throw new Error(`FFmpeg gagal semasa pembahagian video: ${String(fallbackError)}`);
-        }
-        if (exitCode !== 0) {
-          throw new Error(`FFmpeg gagal semasa pembahagian video (Kod ralat: ${exitCode})`);
-        }
-        generatedFiles = (await ffmpeg.listDir('/')).filter(
-          (entry) => !entry.isDir && entry.name.startsWith(outputPrefix) && entry.name.endsWith('.mp4')
-        );
-      }
 
       if (generatedFiles.length === 0) {
         throw new Error('FFmpeg tamat tanpa menghasilkan klip. Cuba video lain atau matikan pilihan mute.');
@@ -291,6 +259,7 @@ export async function transcodeAndSplitVideo(
     onProgress(100);
     return results;
   } catch (error) {
+    results.forEach((result) => URL.revokeObjectURL(result.downloadUrl));
     if (signal?.aborted) {
       throw new DOMException('Proses transcoding telah dibatalkan oleh pengguna', 'AbortError');
     }
@@ -328,11 +297,3 @@ export async function transcodeAndSplitVideo(
   }
 }
 
-function mimeTypeForExtension(extension: string): string {
-  switch (extension) {
-    case 'mov': return 'video/quicktime';
-    case 'webm': return 'video/webm';
-    case '3gp': return 'video/3gpp';
-    default: return 'video/mp4';
-  }
-}

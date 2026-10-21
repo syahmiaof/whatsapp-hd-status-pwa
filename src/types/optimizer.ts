@@ -25,8 +25,6 @@ export interface TranscodeClipResult {
   endTime: number;
   duration: number;
   sizeMb: number;
-  /** True when the source file is returned unchanged to avoid lossy re-encoding. */
-  preservedOriginal?: boolean;
 }
 
 export type ProcessingStage = 
@@ -37,3 +35,4 @@ export type ProcessingStage =
   | 'splitting'
   | 'completed'
   | 'error';
+
