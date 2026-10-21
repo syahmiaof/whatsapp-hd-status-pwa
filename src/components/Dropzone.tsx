@@ -61,7 +61,7 @@ export const Dropzone: React.FC<DropzoneProps> = ({ selectedVideo, onSelectFile,
             Pilih video dari galeri
           </h2>
           <p className="mx-auto mt-2 max-w-xs text-sm leading-6 text-[#657067]">
-            Pilih satu video. StatusHD akan potong 30 saat dan sediakan untuk WhatsApp.
+            Video pendek dikekalkan tanpa render semula. Video panjang dipotong untuk WhatsApp.
           </p>
           <button
             type="button"

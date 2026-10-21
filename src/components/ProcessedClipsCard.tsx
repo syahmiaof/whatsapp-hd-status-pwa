@@ -36,7 +36,7 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
     setShareNotice(null);
 
     try {
-      const file = new File([clip.blob], clip.filename, { type: 'video/mp4' });
+      const file = new File([clip.blob], clip.filename, { type: clip.blob.type || 'video/mp4' });
 
       if (typeof navigator.share === 'function' && navigator.canShare && navigator.canShare({ files: [file] })) {
         try {
@@ -142,6 +142,9 @@ export const ProcessedClipsCard: React.FC<ProcessedClipsCardProps> = ({
                   <p className="font-mono text-[10px] tabular-nums text-[#768078]">
                     {Math.round(clip.duration)}s • {clip.sizeMb.toFixed(1)} MB
                   </p>
+                  {clip.preservedOriginal && (
+                    <p className="text-[10px] font-semibold text-[#168347]">Fail asal dikekalkan</p>
+                  )}
                 </div>
                 </div>
 

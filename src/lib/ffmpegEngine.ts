@@ -49,10 +49,35 @@ export async function transcodeAndSplitVideo(
   settings: OptimizerSettings,
   onProgress: (percent: number) => void,
   signal?: AbortSignal,
-  sourceDuration?: number
+  sourceDuration?: number,
+  sourceWidth?: number,
+  sourceHeight?: number
 ): Promise<TranscodeClipResult[]> {
   if (signal?.aborted) {
     throw new DOMException('Proses transcoding telah dibatalkan', 'AbortError');
+  }
+
+  const duration = sourceDuration && Number.isFinite(sourceDuration) ? sourceDuration : 0;
+
+  // For short clips, do not create an unnecessary lossy generation. WhatsApp
+  // will process the upload anyway; preserving the source gives it the best
+  // available input and avoids downloading/starting the 32 MB WASM engine.
+  if (duration > 0 && duration <= 30 && !settings.muteAudio) {
+    const extension = file.name.match(/\.([a-z0-9]+)$/i)?.[1]?.toLowerCase() || 'mp4';
+    const blob = file.slice(0, file.size, file.type || mimeTypeForExtension(extension));
+    const downloadUrl = URL.createObjectURL(blob);
+    onProgress(100);
+    return [{
+      index: 1,
+      blob,
+      downloadUrl,
+      filename: `StatusHD_Original.${extension}`,
+      startTime: 0,
+      endTime: duration,
+      duration,
+      sizeMb: blob.size / (1024 * 1024),
+      preservedOriginal: true,
+    }];
   }
 
   const ffmpeg = await getFFmpeg();
@@ -104,64 +129,103 @@ export async function transcodeAndSplitVideo(
       await ffmpeg.writeFile(fallbackInputName, fileData);
     }
 
-    // 2. Parameter Optimum WhatsApp Sweet-Spot
-    const width = settings.quality === '1080p' ? 1080 : 720;
-    const height = settings.quality === '1080p' ? 1920 : 1280;
+    // 2. Preserve orientation/aspect ratio and never upscale. Use Lanczos only
+    // when a fallback transcode is required; no padding or forced frame rate.
+    const presetMax = settings.quality === '1080p' ? 1080 : 720;
+    const width = sourceWidth || 0;
+    const height = sourceHeight || 0;
+    const landscape = width > height;
+    const longEdgeMax = presetMax === 1080 ? 1920 : 1280;
+    const maxWidth = landscape
+      ? Math.min(longEdgeMax, width || longEdgeMax)
+      : Math.min(presetMax, width || presetMax);
+    const maxHeight = landscape
+      ? Math.min(presetMax, height || presetMax)
+      : Math.min(longEdgeMax, height || longEdgeMax);
     const crf = settings.quality === '1080p' ? '20' : '22';
-
-    // Filter diperkukuh: force_divisible_by=2, setsar=1, pad seimbang, fps tetap 30
-    const videoFilter = `scale=${width}:${height}:force_original_aspect_ratio=decrease:force_divisible_by=2,pad=${width}:${height}:(ow-iw)/2:(oh-ih)/2,setsar=1,fps=30`;
+    const videoFilter = `scale=${maxWidth}:${maxHeight}:force_original_aspect_ratio=decrease:force_divisible_by=2:flags=lanczos,setsar=1`;
 
     const baseArgs = [
       '-i', activeInputPath,
       '-map', '0:v:0',
-      '-map', '0:a:0?',
+      ...(settings.muteAudio ? ['-an'] : ['-map', '0:a:0?']),
       '-sn',
       '-dn',
       '-vf', videoFilter,
       '-c:v', 'libx264',
       '-crf', crf,
-      // `ultrafast` skips many encoder tools and creates much larger files for
-      // the same CRF. `fast` is a better quality/size tradeoff for a phone PWA.
       '-preset', 'fast',
       '-profile:v', 'high',
-      '-level:v', '4.0',
       '-pix_fmt', 'yuv420p',
       '-sc_threshold', '0',
       '-force_key_frames', 'expr:gte(t,n_forced*30)',
-      '-g', '30',
-      '-fps_mode', 'cfr',
+      '-g', '60',
     ];
 
-    if (settings.muteAudio) {
-      baseArgs.push('-an');
-    } else {
+    if (!settings.muteAudio) {
       baseArgs.push('-c:a', 'aac', '-b:a', '128k', '-ar', '44100', '-ac', '2');
     }
 
     const results: TranscodeClipResult[] = [];
 
     if (settings.autoSplit30s) {
-      // Mod Potong 30 Saat Auto-Segment
-      const splitArgs = [
-        ...baseArgs,
+      // First attempt packet-copy segmentation. This keeps the compressed
+      // video/audio bitstreams untouched. Boundaries land on source keyframes,
+      // so a part can differ slightly from exactly 30 seconds.
+      const copyArgs = [
+        '-i', activeInputPath,
+        '-map', '0:v:0',
+        ...(settings.muteAudio ? ['-an'] : ['-map', '0:a:0?']),
+        '-sn', '-dn',
+        '-c', 'copy',
         '-f', 'segment',
         '-segment_time', '30',
+        '-segment_time_delta', '0.05',
         '-reset_timestamps', '1',
         '-segment_format_options', 'movflags=+faststart',
         `${outputPrefix}_%03d.mp4`
       ];
 
-      const exitCode = await ffmpeg.exec(splitArgs, undefined, { signal });
-      if (exitCode !== 0) {
-        throw new Error(`FFmpeg gagal semasa pembahagian video (Kod ralat: ${exitCode})`);
+      let exitCode = -1;
+      try {
+        exitCode = await ffmpeg.exec(copyArgs, undefined, { signal });
+      } catch (copyError) {
+        if (signal?.aborted) throw copyError;
+        console.warn('Stream-copy segmentation gagal; cuba encode untuk keserasian.', copyError);
+      }
+      let generatedFiles = (await ffmpeg.listDir('/')).filter(
+        (entry) => !entry.isDir && entry.name.startsWith(outputPrefix) && entry.name.endsWith('.mp4')
+      );
+
+      // Some codecs/containers cannot be copied into MP4. Remove partial files
+      // and fall back to a compatibility encode only in that case.
+      if (exitCode !== 0 || generatedFiles.length === 0) {
+        for (const entry of generatedFiles) await ffmpeg.deleteFile(entry.name).catch(() => undefined);
+        try {
+          exitCode = await ffmpeg.exec([
+            ...baseArgs,
+            '-f', 'segment',
+            '-segment_time', '30',
+            '-reset_timestamps', '1',
+            '-segment_format_options', 'movflags=+faststart',
+            `${outputPrefix}_%03d.mp4`
+          ], undefined, { signal });
+        } catch (fallbackError) {
+          if (signal?.aborted) throw fallbackError;
+          throw new Error(`FFmpeg gagal semasa pembahagian video: ${String(fallbackError)}`);
+        }
+        if (exitCode !== 0) {
+          throw new Error(`FFmpeg gagal semasa pembahagian video (Kod ralat: ${exitCode})`);
+        }
+        generatedFiles = (await ffmpeg.listDir('/')).filter(
+          (entry) => !entry.isDir && entry.name.startsWith(outputPrefix) && entry.name.endsWith('.mp4')
+        );
       }
 
-      // Senaraikan fail yang terhasil
-      const dirList = await ffmpeg.listDir('/');
-      const generatedFiles = dirList.filter(
-        (f) => !f.isDir && f.name.startsWith(outputPrefix) && f.name.endsWith('.mp4')
-      );
+      if (generatedFiles.length === 0) {
+        throw new Error('FFmpeg tamat tanpa menghasilkan klip. Cuba video lain atau matikan pilihan mute.');
+      }
+
       generatedFiles.sort((a, b) => a.name.localeCompare(b.name));
 
       for (let i = 0; i < generatedFiles.length; i++) {
@@ -172,10 +236,10 @@ export async function transcodeAndSplitVideo(
         const downloadUrl = URL.createObjectURL(blob);
 
         const startTime = i * 30;
-        const endTime = (sourceDuration && sourceDuration > 0)
-          ? Math.min((i + 1) * 30, sourceDuration)
+        const endTime = (duration > 0)
+          ? Math.min((i + 1) * 30, duration)
           : (i + 1) * 30;
-        const duration = Math.max(0.1, endTime - startTime);
+        const clipDuration = Math.max(0.1, endTime - startTime);
 
         results.push({
           index: i + 1,
@@ -184,7 +248,7 @@ export async function transcodeAndSplitVideo(
           filename: `Status_Part_${i + 1}.mp4`,
           startTime,
           endTime,
-          duration,
+          duration: clipDuration,
           sizeMb,
         });
 
@@ -216,8 +280,8 @@ export async function transcodeAndSplitVideo(
         downloadUrl,
         filename: 'Status_HD_Optimized.mp4',
         startTime: 0,
-        endTime: sourceDuration || 0,
-        duration: sourceDuration || 0,
+        endTime: duration,
+        duration,
         sizeMb,
       });
 
@@ -261,5 +325,14 @@ export async function transcodeAndSplitVideo(
     } catch {
       // Abaikan
     }
+  }
+}
+
+function mimeTypeForExtension(extension: string): string {
+  switch (extension) {
+    case 'mov': return 'video/quicktime';
+    case 'webm': return 'video/webm';
+    case '3gp': return 'video/3gpp';
+    default: return 'video/mp4';
   }
 }

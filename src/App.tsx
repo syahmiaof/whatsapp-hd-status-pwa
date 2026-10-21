@@ -151,7 +151,9 @@ export const App: React.FC = () => {
           setProgress(currentProgress);
         },
         controller.signal,
-        video.durationSeconds
+        video.durationSeconds,
+        video.width,
+        video.height
       );
 
       setClips(results);
