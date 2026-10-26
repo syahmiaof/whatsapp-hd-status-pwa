@@ -1,0 +1,15 @@
+{
+  "slug": "statushd",
+  "title": "StatusHD",
+  "subtitle": "WhatsApp Status video, ready in your browser.",
+  "status": "active",
+  "description": "A browser-based PWA that transcodes video to MP4 and splits it into WhatsApp Status-ready clips on the device.",
+  "stack": [
+    "React",
+    "TypeScript",
+    "Vite",
+    "FFmpeg WebAssembly"
+  ],
+  "liveUrl": "https://statushd.syahmiaof.my/",
+  "image": "public/og-preview.jpg"
+}
