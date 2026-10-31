@@ -24,3 +24,10 @@ dist-ssr
 *.sw?
 
 .vercel
+
+# Scratch, test artifacts & agent metadata
+scratch/
+scratch_*.png
+dummy_test.mp4
+.agents/
+docs/reference/

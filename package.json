@@ -2,10 +2,12 @@
   "name": "whatsapp-hd-status-pwa",
   "private": true,
   "version": "1.0.0",
+  "license": "MIT",
   "type": "module",
   "scripts": {
     "dev": "vite",
     "build": "tsc && vite build",
+    "typecheck": "tsc --noEmit",
     "preview": "vite preview",
     "test:smoke": "node scratch/test_ui_flow.cjs"
   },
@@ -13,7 +15,9 @@
     "@ffmpeg/core": "^0.12.10",
     "@ffmpeg/ffmpeg": "^0.12.15",
     "@ffmpeg/util": "^0.12.2",
+    "@gsap/react": "^2.1.2",
     "canvas-confetti": "^1.9.4",
+    "gsap": "^3.15.0",
     "lucide-react": "^1.16.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0"
